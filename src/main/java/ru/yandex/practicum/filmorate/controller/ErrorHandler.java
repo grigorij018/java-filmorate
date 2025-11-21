@@ -24,8 +24,10 @@ public class ErrorHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
     public Map<String, String> handleResponseStatusException(ResponseStatusException ex) {
+        // Возвращаем тот же статус код, который был в исключении
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         return Map.of(
-                "error", ex.getStatusCode().toString(),
+                "error", status.getReasonPhrase(),
                 "message", ex.getReason() != null ? ex.getReason() : "Ошибка"
         );
     }
