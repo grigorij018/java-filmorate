@@ -28,10 +28,7 @@ public class ErrorHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public Map<String, String> handleResponseStatusException(ResponseStatusException ex) {
         log.warn("ResponseStatusException: {} - {}", ex.getStatusCode(), ex.getReason());
-        return Map.of(
-                "error", ex.getStatusCode().toString(),
-                "message", ex.getReason() != null ? ex.getReason() : "Ошибка"
-        );
+        throw ex; // Пробрасываем исключение дальше, чтобы Spring обработал статус
     }
 
     @ExceptionHandler(Exception.class)
