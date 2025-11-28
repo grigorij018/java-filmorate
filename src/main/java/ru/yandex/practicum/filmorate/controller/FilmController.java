@@ -1,62 +1,55 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
-
-import java.time.LocalDate;
-import java.util.*;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
-    private final Map<Integer, Film> films = new HashMap<>();
-    private int nextId = 1;
-    private static final LocalDate EARLY_RELEASE_DATE = LocalDate.of(1895, 12, 28);
-
-    private void validateReleaseDate(Film film) {
-        if (film.getReleaseDate().isBefore(EARLY_RELEASE_DATE)) {
-            log.warn("Ошибка валидации даты релиза для фильма: {}", film.getName());
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Дата релиза — не раньше 28 декабря 1895 года"
-            );
-        }
-    }
+    private final FilmService filmService;
 
     @GetMapping
-    public Collection<Film> findAll() {
-        return films.values();
+    public List<Film> findAll() {
+        return filmService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Film findById(@PathVariable Integer id) {
+        return filmService.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Film create(@Valid @RequestBody Film film) {
-        validateReleaseDate(film);
-        film.setId(nextId++);
-        films.put(film.getId(), film);
-        log.info("Создан фильм: {}", film);
-        return film;
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        if (film.getId() == null) {
-            log.warn("Попытка обновить фильм без ID");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID фильма обязателен");
-        }
+        return filmService.update(film);
+    }
 
-        if (!films.containsKey(film.getId())) {
-            log.warn("Попытка обновить несуществующий фильм с id: {}", film.getId());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден");
-        }
-        validateReleaseDate(film);
-        films.put(film.getId(), film);
-        log.info("Обновлен фильм: {}", film);
-        return film;
+    @PutMapping("/{id}/like/{userId}")
+    public Film addLike(@PathVariable Integer id, @PathVariable Integer userId) {
+        return filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public Film removeLike(@PathVariable Integer id, @PathVariable Integer userId) {
+        return filmService.removeLike(id, userId);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getPopularFilms(
+            @RequestParam(defaultValue = "10") Integer count) {
+        return filmService.getPopularFilms(count);
     }
 }
