@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -26,9 +27,13 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public Map<String, String> handleResponseStatusException(ResponseStatusException ex) {
+    public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
         log.warn("ResponseStatusException: {} - {}", ex.getStatusCode(), ex.getReason());
-        throw ex; // Пробрасываем исключение дальше, чтобы Spring обработал статус
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(Map.of(
+                        "error", ex.getStatusCode().toString(),
+                        "message", ex.getReason() != null ? ex.getReason() : "Ошибка"
+                ));
     }
 
     @ExceptionHandler(Exception.class)
