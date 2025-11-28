@@ -4,8 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,18 +24,20 @@ class ErrorHandlerTest {
                 "Фильм не найден"
         );
 
-        var response = errorHandler.handleResponseStatusException(ex);
+        ResponseEntity<Map<String, String>> response = errorHandler.handleResponseStatusException(ex);
 
         assertNotNull(response);
-        assertEquals("404 NOT_FOUND", response.get("error"));
-        assertEquals("Фильм не найден", response.get("message"));
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("404 NOT_FOUND", response.getBody().get("error"));
+        assertEquals("Фильм не найден", response.getBody().get("message"));
     }
 
     @Test
     void handleOtherExceptions_ReturnsInternalServerError() {
         Exception ex = new Exception("Test exception");
 
-        var response = errorHandler.handleOtherExceptions(ex);
+        Map<String, String> response = errorHandler.handleOtherExceptions(ex);
 
         assertNotNull(response);
         assertEquals("Внутренняя ошибка сервера", response.get("error"));
