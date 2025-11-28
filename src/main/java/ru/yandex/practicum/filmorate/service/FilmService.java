@@ -30,8 +30,11 @@ public class FilmService {
     }
 
     public Film update(Film film) {
+        if (film.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID фильма обязателен");
+        }
         validateReleaseDate(film);
-        if (film.getId() == null || filmStorage.findById(film.getId()).isEmpty()) {
+        if (filmStorage.findById(film.getId()).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден");
         }
         return filmStorage.update(film);

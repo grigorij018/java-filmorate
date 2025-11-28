@@ -26,7 +26,6 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    @ResponseStatus // Без указания статуса - будет использоваться статус из исключения
     public Map<String, String> handleResponseStatusException(ResponseStatusException ex) {
         log.warn("ResponseStatusException: {} - {}", ex.getStatusCode(), ex.getReason());
         return Map.of(

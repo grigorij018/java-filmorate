@@ -25,8 +25,11 @@ public class UserService {
     }
 
     public User update(User user) {
+        if (user.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID пользователя обязателен");
+        }
         setDisplayName(user);
-        if (user.getId() == null || userStorage.findById(user.getId()).isEmpty()) {
+        if (userStorage.findById(user.getId()).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
         }
         return userStorage.update(user);
