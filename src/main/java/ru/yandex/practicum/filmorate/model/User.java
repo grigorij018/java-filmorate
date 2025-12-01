@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Data;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.Map;
 
 @Data
 public class User {
@@ -20,4 +21,8 @@ public class User {
 
     @Past(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
+
+    // Новое поле: статусы дружбы (userId -> FriendshipStatus)
+    private Map<Integer, FriendshipStatus> friends;
 }
+
