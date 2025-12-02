@@ -1,0 +1,79 @@
+package ru.yandex.practicum.filmorate.storage.user;
+
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.context.annotation.Import;
+import ru.yandex.practicum.filmorate.model.User;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@JdbcTest
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@Import({UserDbStorage.class})
+class UserDbStorageTest {
+
+    private final UserDbStorage userStorage;
+
+    @Test
+    void testCreateAndFindUser() {
+        User user = new User();
+        user.setEmail("test@email.com");
+        user.setLogin("testlogin");
+        user.setName("Test User");
+        user.setBirthday(LocalDate.of(1990, 1, 1));
+
+        User createdUser = userStorage.create(user);
+
+        assertThat(createdUser.getId()).isNotNull();
+        assertThat(createdUser.getEmail()).isEqualTo("test@email.com");
+
+        Optional<User> foundUser = userStorage.findById(createdUser.getId());
+        assertThat(foundUser).isPresent();
+        assertThat(foundUser.get().getEmail()).isEqualTo("test@email.com");
+    }
+
+    @Test
+    void testUpdateUser() {
+        User user = new User();
+        user.setEmail("test@email.com");
+        user.setLogin("testlogin");
+        user.setName("Test User");
+        user.setBirthday(LocalDate.of(1990, 1, 1));
+
+        User createdUser = userStorage.create(user);
+        createdUser.setEmail("updated@email.com");
+
+        User updatedUser = userStorage.update(createdUser);
+        assertThat(updatedUser.getEmail()).isEqualTo("updated@email.com");
+    }
+
+    @Test
+    void testAddFriend() {
+        User user1 = new User();
+        user1.setEmail("user1@email.com");
+        user1.setLogin("user1");
+        user1.setName("User 1");
+        user1.setBirthday(LocalDate.of(1990, 1, 1));
+
+        User user2 = new User();
+        user2.setEmail("user2@email.com");
+        user2.setLogin("user2");
+        user2.setName("User 2");
+        user2.setBirthday(LocalDate.of(1991, 1, 1));
+
+        User createdUser1 = userStorage.create(user1);
+        User createdUser2 = userStorage.create(user2);
+
+        userStorage.addFriend(createdUser1.getId(), createdUser2.getId());
+
+        List<User> friends = userStorage.getFriends(createdUser1.getId());
+        assertThat(friends).hasSize(1);
+        assertThat(friends.get(0).getId()).isEqualTo(createdUser2.getId());
+    }
+}
