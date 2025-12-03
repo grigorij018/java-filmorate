@@ -151,8 +151,10 @@ public class UserDbStorage implements UserStorage {
             String sql = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
             int deleted = jdbcTemplate.update(sql, userId, friendId);
 
+            // Если ничего не удалено - это нормально (дружбы не было)
             if (deleted == 0) {
-                throw new RuntimeException("Дружба между пользователями " + userId + " и " + friendId + " не найдена");
+                log.info("Дружбы между пользователями {} и {} не существовало", userId, friendId);
+                return; // Не бросаем исключение
             }
 
             log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
@@ -166,12 +168,12 @@ public class UserDbStorage implements UserStorage {
     @Transactional(readOnly = true)
     public List<User> getFriends(Integer userId) {
         String sql = """
-            SELECT u.*
-            FROM users u
-            JOIN friendships f ON u.id = f.friend_id
-            WHERE f.user_id = ? AND f.status = 'CONFIRMED'
-            ORDER BY u.id
-            """;
+        SELECT u.*
+        FROM users u
+        JOIN friendships f ON u.id = f.friend_id
+        WHERE f.user_id = ?
+        ORDER BY u.id
+        """;
 
         List<User> friends = jdbcTemplate.query(sql, this::mapRowToUser, userId);
 

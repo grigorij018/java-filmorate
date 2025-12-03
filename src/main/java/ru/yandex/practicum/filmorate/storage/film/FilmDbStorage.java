@@ -248,12 +248,12 @@ public class FilmDbStorage implements FilmStorage {
                 .collect(Collectors.joining(", "));
 
         String sql = String.format("""
-            SELECT fg.film_id, g.id as genre_id, g.name as genre_name
-            FROM film_genres fg
-            JOIN genres g ON fg.genre_id = g.id
-            WHERE fg.film_id IN (%s)
-            ORDER BY fg.film_id, g.id
-            """, placeholders);
+        SELECT fg.film_id, g.id as genre_id, g.name as genre_name
+        FROM film_genres fg
+        JOIN genres g ON fg.genre_id = g.id
+        WHERE fg.film_id IN (%s)
+        ORDER BY fg.film_id, g.id  -- Сортировка по ID жанра
+        """, placeholders);
 
         Map<Integer, List<Genre>> genresByFilmId = jdbcTemplate.query(sql, filmIds.toArray(), rs -> {
             Map<Integer, List<Genre>> result = new HashMap<>();
