@@ -166,9 +166,9 @@ public class UserDbStorage implements UserStorage {
     @Transactional(readOnly = true)
     public List<User> getFriends(Integer userId) {
         String sql = """
-            SELECT u.* 
-            FROM users u 
-            JOIN friendships f ON u.id = f.friend_id 
+            SELECT u.*
+            FROM users u
+            JOIN friendships f ON u.id = f.friend_id
             WHERE f.user_id = ? AND f.status = 'CONFIRMED'
             ORDER BY u.id
             """;
@@ -186,10 +186,10 @@ public class UserDbStorage implements UserStorage {
     @Transactional(readOnly = true)
     public List<User> getCommonFriends(Integer userId, Integer otherUserId) {
         String sql = """
-            SELECT u.* FROM users u 
-            JOIN friendships f1 ON u.id = f1.friend_id 
-            JOIN friendships f2 ON u.id = f2.friend_id 
-            WHERE f1.user_id = ? AND f2.user_id = ? 
+            SELECT u.* FROM users u
+            JOIN friendships f1 ON u.id = f1.friend_id
+            JOIN friendships f2 ON u.id = f2.friend_id
+            WHERE f1.user_id = ? AND f2.user_id = ?
             AND f1.status = 'CONFIRMED' AND f2.status = 'CONFIRMED'
             ORDER BY u.id
             """;
