@@ -32,5 +32,10 @@ public interface UserStorage {
     List<User> getFriends(Integer userId);
 
     @Transactional(readOnly = true)
+    default List<User> getAllFriends(Integer userId) {
+        return getFriends(userId);
+    }
+
+    @Transactional(readOnly = true)
     List<User> getCommonFriends(Integer userId, Integer otherUserId);
 }
