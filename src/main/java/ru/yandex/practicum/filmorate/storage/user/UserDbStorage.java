@@ -173,16 +173,31 @@ public class UserDbStorage implements UserStorage {
 
     private void loadFriends(User user) {
         if (user.getId() != null) {
+            // Загружаем только подтвержденных друзей
             String sql = "SELECT friend_id FROM friendships WHERE user_id = ? AND status = 'CONFIRMED'";
             List<Integer> friendIds = jdbcTemplate.queryForList(sql, Integer.class, user.getId());
             user.setFriends(new HashSet<>(friendIds));
         }
     }
 
-    // Метод для подтверждения дружбы (если нужно)
+    // Метод для подтверждения дружбы (нужен для тестов)
     public void confirmFriendship(Integer userId, Integer friendId) {
         String sql = "UPDATE friendships SET status = 'CONFIRMED' WHERE user_id = ? AND friend_id = ?";
-        jdbcTemplate.update(sql, userId, friendId);
-        log.info("Дружба между пользователями {} и {} подтверждена", userId, friendId);
+        int updated = jdbcTemplate.update(sql, userId, friendId);
+
+        if (updated > 0) {
+            log.info("Дружба между пользователями {} и {} подтверждена", userId, friendId);
+        } else {
+            log.warn("Не удалось подтвердить дружбу между пользователями {} и {}", userId, friendId);
+        }
+    }
+
+    // Метод для получения всех друзей (включая неподтвержденных) - для внутреннего использования
+    public List<User> getAllFriends(Integer userId) {
+        String sql = "SELECT u.* FROM users u " +
+                "JOIN friendships f ON u.id = f.friend_id " +
+                "WHERE f.user_id = ?";
+
+        return jdbcTemplate.query(sql, this::mapRowToUser, userId);
     }
 }
