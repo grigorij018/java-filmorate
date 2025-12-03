@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,11 +31,13 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
+        // Валидный пользователь
         validUser = new User();
-        validUser.setEmail("valid@email.com");
-        validUser.setLogin("validlogin");
+        validUser.setEmail("valid" + UUID.randomUUID() + "@email.com");
+        validUser.setLogin("validlogin" + UUID.randomUUID().toString().substring(0, 8));
         validUser.setBirthday(LocalDate.of(1990, 1, 1));
 
+        // Невалидный пользователь
         invalidUser = new User();
         invalidUser.setEmail("invalid-email");
         invalidUser.setLogin("invalid login"); // Пробелы в логине
@@ -48,22 +51,23 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(validUser)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.email").value("valid@email.com"))
-                .andExpect(jsonPath("$.login").value("validlogin"));
+                .andExpect(jsonPath("$.email").value(validUser.getEmail()))
+                .andExpect(jsonPath("$.login").value(validUser.getLogin()));
     }
 
     @Test
     void createUser_UserWithBlankName_NameSetToLogin() throws Exception {
         User user = new User();
-        user.setEmail("test@email.com");
-        user.setLogin("testlogin");
+        user.setEmail("test" + UUID.randomUUID() + "@email.com");
+        user.setLogin("testlogin" + UUID.randomUUID().toString().substring(0, 8));
         user.setName(""); // Пустое имя
+        user.setBirthday(LocalDate.of(1990, 1, 1));
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(user)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("testlogin"));
+                .andExpect(jsonPath("$.name").value(user.getLogin()));
     }
 
     @Test
@@ -94,22 +98,27 @@ class UserControllerTest {
 
     @Test
     void updateUser_ValidUser_ReturnsOk() throws Exception {
-        // Сначала создаем пользователя
+        // Сначала создаем пользователя с уникальными данными
+        User uniqueUser = new User();
+        uniqueUser.setEmail("update" + UUID.randomUUID() + "@email.com");
+        uniqueUser.setLogin("updatelogin" + UUID.randomUUID().toString().substring(0, 8));
+        uniqueUser.setBirthday(LocalDate.of(1990, 1, 1));
+
         String response = mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validUser)))
+                        .content(objectMapper.writeValueAsString(uniqueUser)))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         User createdUser = objectMapper.readValue(response, User.class);
-        createdUser.setEmail("updated@email.com");
+        createdUser.setEmail("updated" + UUID.randomUUID() + "@email.com");
 
         mockMvc.perform(put("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createdUser)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("updated@email.com"));
+                .andExpect(jsonPath("$.email").value(createdUser.getEmail()));
     }
 
     @Test

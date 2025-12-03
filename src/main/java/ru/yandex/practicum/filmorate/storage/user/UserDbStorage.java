@@ -14,6 +14,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.*;
 
 @Slf4j
@@ -26,8 +27,10 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> findAll() {
-        String sql = "SELECT * FROM users";
-        return jdbcTemplate.query(sql, this::mapRowToUser);
+        String sql = "SELECT * FROM users ORDER BY id";
+        List<User> users = jdbcTemplate.query(sql, this::mapRowToUser);
+        users.forEach(this::loadFriends);
+        return users;
     }
 
     @Override
@@ -41,12 +44,19 @@ public class UserDbStorage implements UserStorage {
             stmt.setString(1, user.getEmail());
             stmt.setString(2, user.getLogin());
             stmt.setString(3, user.getName());
-            stmt.setDate(4, Date.valueOf(user.getBirthday()));
+
+            // Безопасная проверка birthday
+            if (user.getBirthday() != null) {
+                stmt.setDate(4, Date.valueOf(user.getBirthday()));
+            } else {
+                stmt.setNull(4, Types.DATE);
+            }
             return stmt;
         }, keyHolder);
 
-        user.setId(Objects.requireNonNull(keyHolder.getKey()).intValue());
-        log.info("Создан пользователь с ID: {}", user.getId());
+        Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        user.setId(id);
+        log.info("Создан пользователь с ID: {}", id);
         return user;
     }
 
@@ -58,7 +68,7 @@ public class UserDbStorage implements UserStorage {
                 user.getEmail(),
                 user.getLogin(),
                 user.getName(),
-                Date.valueOf(user.getBirthday()),
+                user.getBirthday() != null ? Date.valueOf(user.getBirthday()) : null,
                 user.getId());
 
         if (updated == 0) {
@@ -75,7 +85,8 @@ public class UserDbStorage implements UserStorage {
 
         try {
             User user = jdbcTemplate.queryForObject(sql, this::mapRowToUser, id);
-            return Optional.ofNullable(user);
+            loadFriends(user);
+            return Optional.of(user);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -90,6 +101,15 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(Integer userId, Integer friendId) {
+        // Проверяем существование пользователей
+        if (findById(userId).isEmpty()) {
+            throw new RuntimeException("Пользователь с ID " + userId + " не найден");
+        }
+        if (findById(friendId).isEmpty()) {
+            throw new RuntimeException("Пользователь с ID " + friendId + " не найден");
+        }
+
+        // Односторонняя дружба согласно ТЗ
         String sql = "MERGE INTO friendships (user_id, friend_id, status) KEY(user_id, friend_id) VALUES (?, ?, 'PENDING')";
         jdbcTemplate.update(sql, userId, friendId);
         log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
@@ -104,32 +124,34 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getFriends(Integer userId) {
-        String sql = "SELECT u.* FROM users u " +
-                "JOIN friendships f ON u.id = f.friend_id " +
-                "WHERE f.user_id = ?";
-
-        List<User> friends = jdbcTemplate.query(sql, this::mapRowToUser, userId);
-
-        // Загружаем статусы дружбы
-        for (User friend : friends) {
-            String statusSql = "SELECT status FROM friendships WHERE user_id = ? AND friend_id = ?";
-            try {
-                String status = jdbcTemplate.queryForObject(statusSql, String.class, userId, friend.getId());
-                // Можно добавить статус в объект User, если нужно
-            } catch (EmptyResultDataAccessException e) {
-                // Статус не найден
-            }
+        if (findById(userId).isEmpty()) {
+            throw new RuntimeException("Пользователь с ID " + userId + " не найден");
         }
 
+        String sql = "SELECT u.* FROM users u " +
+                "JOIN friendships f ON u.id = f.friend_id " +
+                "WHERE f.user_id = ? AND f.status = 'CONFIRMED'";
+
+        List<User> friends = jdbcTemplate.query(sql, this::mapRowToUser, userId);
+        friends.forEach(this::loadFriends);
         return friends;
     }
 
     @Override
     public List<User> getCommonFriends(Integer userId, Integer otherUserId) {
+        // Проверяем существование пользователей
+        if (findById(userId).isEmpty()) {
+            throw new RuntimeException("Пользователь с ID " + userId + " не найден");
+        }
+        if (findById(otherUserId).isEmpty()) {
+            throw new RuntimeException("Пользователь с ID " + otherUserId + " не найден");
+        }
+
         String sql = "SELECT u.* FROM users u " +
                 "JOIN friendships f1 ON u.id = f1.friend_id " +
                 "JOIN friendships f2 ON u.id = f2.friend_id " +
-                "WHERE f1.user_id = ? AND f2.user_id = ?";
+                "WHERE f1.user_id = ? AND f2.user_id = ? " +
+                "AND f1.status = 'CONFIRMED' AND f2.status = 'CONFIRMED'";
 
         return jdbcTemplate.query(sql, this::mapRowToUser, userId, otherUserId);
     }
@@ -140,13 +162,27 @@ public class UserDbStorage implements UserStorage {
         user.setEmail(rs.getString("email"));
         user.setLogin(rs.getString("login"));
         user.setName(rs.getString("name"));
-        user.setBirthday(rs.getDate("birthday").toLocalDate());
 
-        // Загружаем друзей
-        String friendsSql = "SELECT friend_id FROM friendships WHERE user_id = ?";
-        List<Integer> friendIds = jdbcTemplate.queryForList(friendsSql, Integer.class, user.getId());
-        user.setFriends(new HashSet<>(friendIds));
+        Date birthday = rs.getDate("birthday");
+        if (birthday != null) {
+            user.setBirthday(birthday.toLocalDate());
+        }
 
         return user;
+    }
+
+    private void loadFriends(User user) {
+        if (user.getId() != null) {
+            String sql = "SELECT friend_id FROM friendships WHERE user_id = ? AND status = 'CONFIRMED'";
+            List<Integer> friendIds = jdbcTemplate.queryForList(sql, Integer.class, user.getId());
+            user.setFriends(new HashSet<>(friendIds));
+        }
+    }
+
+    // Метод для подтверждения дружбы (если нужно)
+    public void confirmFriendship(Integer userId, Integer friendId) {
+        String sql = "UPDATE friendships SET status = 'CONFIRMED' WHERE user_id = ? AND friend_id = ?";
+        jdbcTemplate.update(sql, userId, friendId);
+        log.info("Дружба между пользователями {} и {} подтверждена", userId, friendId);
     }
 }
