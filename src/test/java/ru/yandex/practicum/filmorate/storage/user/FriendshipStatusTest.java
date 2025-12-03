@@ -1,4 +1,3 @@
-// src/test/java/ru/yandex/practicum/filmorate/storage/user/FriendshipStatusTest.java
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.RequiredArgsConstructor;
@@ -43,15 +42,16 @@ class FriendshipStatusTest {
         assertThat(allFriends).hasSize(1);
         assertThat(allFriends.get(0).getId()).isEqualTo(createdUser2.getId());
 
-        // Получаем подтвержденных друзей (должен быть пустой)
+        // Получаем подтвержденных друзей (должен быть пустой, так как дружба не подтверждена)
         List<User> confirmedFriends = userStorage.getFriends(createdUser1.getId());
         assertThat(confirmedFriends).isEmpty();
 
-        // Подтверждаем дружбу
-        userStorage.confirmFriendship(createdUser1.getId(), createdUser2.getId());
+        // Подтверждаем дружбу (добавляем обратную связь)
+        userStorage.addFriend(createdUser2.getId(), createdUser1.getId());
 
         // Теперь должны получить подтвержденного друга
         List<User> confirmedFriendsAfter = userStorage.getFriends(createdUser1.getId());
+        // В данной реализации getFriends возвращает всех, кого пользователь добавил в друзья
         assertThat(confirmedFriendsAfter).hasSize(1);
         assertThat(confirmedFriendsAfter.get(0).getId()).isEqualTo(createdUser2.getId());
     }

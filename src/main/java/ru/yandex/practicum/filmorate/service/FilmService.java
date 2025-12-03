@@ -84,7 +84,6 @@ public class FilmService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "MPA рейтинг обязателен");
         }
 
-        // Проверяем существование MPA
         boolean mpaExists = mpaStorage.findById(film.getMpa().getId()).isPresent();
         if (!mpaExists) {
             log.warn("MPA рейтинг с ID {} не найден", film.getMpa().getId());

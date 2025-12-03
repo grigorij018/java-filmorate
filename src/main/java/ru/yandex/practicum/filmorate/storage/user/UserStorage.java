@@ -23,4 +23,7 @@ public interface UserStorage {
     List<User> getFriends(Integer userId);
 
     List<User> getCommonFriends(Integer userId, Integer otherUserId);
+
+    // Новый метод для получения всех друзей (включая неподтвержденных)
+    List<User> getAllFriends(Integer userId);
 }

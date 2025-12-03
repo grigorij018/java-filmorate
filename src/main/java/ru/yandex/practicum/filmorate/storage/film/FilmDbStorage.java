@@ -52,7 +52,6 @@ public class FilmDbStorage implements FilmStorage {
             stmt.setDate(3, Date.valueOf(film.getReleaseDate()));
             stmt.setInt(4, film.getDuration());
 
-            // Безопасная проверка MPA
             if (film.getMpa() != null && film.getMpa().getId() != null) {
                 stmt.setInt(5, film.getMpa().getId());
             } else {
@@ -156,7 +155,6 @@ public class FilmDbStorage implements FilmStorage {
         film.setReleaseDate(rs.getDate("release_date").toLocalDate());
         film.setDuration(rs.getInt("duration"));
 
-        // MPA рейтинг
         MpaRating mpa = new MpaRating();
         mpa.setId(rs.getInt("mpa_id"));
         mpa.setName(rs.getString("mpa_name"));
@@ -178,9 +176,8 @@ public class FilmDbStorage implements FilmStorage {
 
             if (film.getGenres() != null && !film.getGenres().isEmpty()) {
                 // Сортируем жанры по ID перед сохранением
-                List<Genre> sortedGenres = film.getGenres().stream()
-                        .sorted(Comparator.comparing(Genre::getId))
-                        .toList();
+                List<Genre> sortedGenres = new ArrayList<>(film.getGenres());
+                sortedGenres.sort(Comparator.comparing(Genre::getId));
 
                 String insertSql = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
                 for (Genre genre : sortedGenres) {
@@ -199,7 +196,7 @@ public class FilmDbStorage implements FilmStorage {
             String sql = "SELECT g.id, g.name FROM genres g " +
                     "JOIN film_genres fg ON g.id = fg.genre_id " +
                     "WHERE fg.film_id = ? " +
-                    "ORDER BY g.id ASC"; // Добавляем сортировку по ID
+                    "ORDER BY g.id ASC"; // Сортировка по ID
 
             List<Genre> genres = jdbcTemplate.query(sql, (rs, rowNum) -> {
                 Genre genre = new Genre();
@@ -208,7 +205,7 @@ public class FilmDbStorage implements FilmStorage {
                 return genre;
             }, film.getId());
 
-            film.setGenres(new HashSet<>(genres));
+            film.setGenres(new LinkedHashSet<>(genres)); // LinkedHashSet сохраняет порядок
         }
     }
 
