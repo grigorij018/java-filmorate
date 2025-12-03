@@ -6,10 +6,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import java.util.*;
-import java.util.stream.Collectors;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.model.Film;
 
+@Deprecated
 @Slf4j
 @Component
 public abstract class InMemoryFilmStorage implements FilmStorage {

@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Data;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Data
@@ -23,6 +23,6 @@ public class Film {
     private Integer duration;
 
     private MpaRating mpa;
-    private Set<Genre> genres = new HashSet<>();
-    private Set<Integer> likes = new HashSet<>();
+    private Set<Genre> genres = new LinkedHashSet<>(); // Используем LinkedHashSet вместо HashSet
+    private Set<Integer> likes = new LinkedHashSet<>();
 }

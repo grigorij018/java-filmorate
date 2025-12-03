@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -19,21 +20,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import({FilmDbStorage.class})
 class FilmDbStorageTest {
 
-    private final FilmDbStorage filmStorage;
+    private final FilmStorage filmStorage;
 
-    @Test
-    void testCreateAndFindFilm() {
-        Film film = new Film();
-        film.setName("Test Film");
-        film.setDescription("Test Description");
-        film.setReleaseDate(LocalDate.of(2000, 1, 1));
-        film.setDuration(120);
+    private Film testFilm;
+
+    @BeforeEach
+    void setUp() {
+        testFilm = new Film();
+        testFilm.setName("Test Film");
+        testFilm.setDescription("Test Description");
+        testFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        testFilm.setDuration(120);
 
         MpaRating mpa = new MpaRating();
         mpa.setId(1);
-        film.setMpa(mpa);
+        testFilm.setMpa(mpa);
+    }
 
-        Film createdFilm = filmStorage.create(film);
+    @Test
+    void testCreateAndFindFilm() {
+        Film createdFilm = filmStorage.create(testFilm);
 
         assertThat(createdFilm.getId()).isNotNull();
         assertThat(createdFilm.getName()).isEqualTo("Test Film");
