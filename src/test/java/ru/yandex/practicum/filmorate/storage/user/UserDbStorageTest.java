@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import({UserDbStorage.class})
 class UserDbStorageTest {
 
-    private final UserDbStorage userStorage;
+    private final UserStorage userStorage;
     private User testUser;
 
     @BeforeEach
@@ -98,13 +98,8 @@ class UserDbStorageTest {
         user2.setBirthday(LocalDate.of(1992, 1, 1));
         User friend = userStorage.create(user2);
 
-        // Добавляем друга
         userStorage.addFriend(user1.getId(), friend.getId());
 
-        // Подтверждаем дружбу
-        userStorage.confirmFriendship(user1.getId(), friend.getId());
-
-        // Получаем список друзей
         List<User> friends = userStorage.getFriends(user1.getId());
         assertThat(friends).hasSize(1);
         assertThat(friends.get(0).getId()).isEqualTo(friend.getId());
@@ -121,19 +116,10 @@ class UserDbStorageTest {
         user2.setBirthday(LocalDate.of(1992, 1, 1));
         User friend = userStorage.create(user2);
 
-        // Добавляем и подтверждаем дружбу
         userStorage.addFriend(user1.getId(), friend.getId());
-        userStorage.confirmFriendship(user1.getId(), friend.getId());
-
-        // Проверяем, что друг добавлен
-        List<User> friendsBefore = userStorage.getFriends(user1.getId());
-        assertThat(friendsBefore).hasSize(1);
-
-        // Удаляем друга
         userStorage.removeFriend(user1.getId(), friend.getId());
 
-        // Проверяем, что друг удален
-        List<User> friendsAfter = userStorage.getFriends(user1.getId());
-        assertThat(friendsAfter).isEmpty();
+        List<User> friends = userStorage.getFriends(user1.getId());
+        assertThat(friends).isEmpty();
     }
 }

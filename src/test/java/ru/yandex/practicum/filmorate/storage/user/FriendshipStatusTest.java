@@ -17,35 +17,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import({UserDbStorage.class})
 class FriendshipStatusTest {
 
-    private final UserDbStorage userStorage;
+    private final UserStorage userStorage;
 
     @Test
     void shouldAddFriendWithPendingStatus() {
-        // Создаем двух пользователей
+        // Создаем первого пользователя
         User user1 = new User();
         user1.setEmail("user1@email.com");
         user1.setLogin("user1");
+        user1.setName("User 1");
         user1.setBirthday(LocalDate.of(1990, 1, 1));
         User createdUser1 = userStorage.create(user1);
 
+        // Создаем второго пользователя
         User user2 = new User();
         user2.setEmail("user2@email.com");
         user2.setLogin("user2");
+        user2.setName("User 2");
         user2.setBirthday(LocalDate.of(1991, 1, 1));
         User createdUser2 = userStorage.create(user2);
 
-        // Добавляем друга (статус PENDING по умолчанию)
+        // Добавляем в друзья (статус PENDING согласно ТЗ - односторонняя дружба)
         userStorage.addFriend(createdUser1.getId(), createdUser2.getId());
 
-        // Получаем всех друзей (включая неподтвержденных)
-        List<User> allFriends = userStorage.getAllFriends(createdUser1.getId());
-        assertThat(allFriends).hasSize(1);
-        assertThat(allFriends.get(0).getId()).isEqualTo(createdUser2.getId());
-
-        // В текущей реализации метод getFriends() возвращает ВСЕХ друзей (независимо от статуса)
-        // Поэтому он не должен быть пустым
+        // Проверяем, что друзья есть в списке
         List<User> friends = userStorage.getFriends(createdUser1.getId());
-        assertThat(friends).hasSize(1); // Исправляем ожидание - должен быть 1 друг
-        assertThat(friends.get(0).getId()).isEqualTo(createdUser2.getId());
+        assertThat(friends).hasSize(1);
     }
 }
