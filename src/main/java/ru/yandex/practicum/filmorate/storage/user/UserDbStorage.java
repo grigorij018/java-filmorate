@@ -134,7 +134,8 @@ public class UserDbStorage implements UserStorage {
             throw new RuntimeException("Пользователь с ID " + userId + " не найден");
         }
 
-        // Получаем всех, кого пользователь добавил в друзья
+        // Получаем всех, кого пользователь добавил в друзья (независимо от статуса)
+        // Это соответствует ТЗ, где дружба односторонняя
         String sql = "SELECT u.* FROM users u " +
                 "JOIN friendships f ON u.id = f.friend_id " +
                 "WHERE f.user_id = ?";
@@ -144,20 +145,10 @@ public class UserDbStorage implements UserStorage {
         return friends;
     }
 
+
     @Override
     public List<User> getAllFriends(Integer userId) {
-        if (findById(userId).isEmpty()) {
-            throw new RuntimeException("Пользователь с ID " + userId + " не найден");
-        }
-
-        // Получаем всех, кого пользователь добавил в друзья (включая неподтвержденных)
-        String sql = "SELECT u.* FROM users u " +
-                "JOIN friendships f ON u.id = f.friend_id " +
-                "WHERE f.user_id = ?";
-
-        List<User> friends = jdbcTemplate.query(sql, this::mapRowToUser, userId);
-        friends.forEach(this::loadFriends);
-        return friends;
+        return getFriends(userId); // Возвращаем то же самое, так как в текущей реализации нет статусов
     }
 
     @Override
