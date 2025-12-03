@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.model.User;
 
+@Deprecated
 @Slf4j
 @Component
 public abstract class InMemoryUserStorage implements UserStorage {
