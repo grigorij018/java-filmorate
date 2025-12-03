@@ -79,11 +79,14 @@ class FilmServiceTest {
     void createFilm_TooEarlyReleaseDate_ShouldThrowException() {
         validFilm.setReleaseDate(LocalDate.of(1890, 1, 1));
 
-        // Настраиваем моки для валидации MPA и жанров
-        when(mpaStorage.findById(1)).thenReturn(Optional.of(validFilm.getMpa()));
-        when(genreStorage.findById(1)).thenReturn(Optional.of(new Genre(1, "Комедия")));
-
+        // НЕ настраиваем моки для MPA и жанров - они не будут использоваться,
+        // так как валидация даты релиза выбросит исключение раньше
         assertThrows(ResponseStatusException.class, () -> filmService.create(validFilm));
+
+        // Проверяем, что методы валидации MPA и жанров не вызывались
+        verify(mpaStorage, never()).findById(anyInt());
+        verify(genreStorage, never()).findById(anyInt());
+        verify(filmStorage, never()).create(any(Film.class));
     }
 
     @Test
@@ -93,6 +96,9 @@ class FilmServiceTest {
         when(mpaStorage.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> filmService.create(validFilm));
+
+        verify(mpaStorage, times(1)).findById(999);
+        verify(genreStorage, never()).findById(anyInt());
     }
 
     @Test
@@ -103,5 +109,9 @@ class FilmServiceTest {
         when(genreStorage.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> filmService.create(validFilm));
+
+        verify(mpaStorage, times(1)).findById(1);
+        verify(genreStorage, times(1)).findById(999);
+        verify(filmStorage, never()).create(any(Film.class));
     }
 }
