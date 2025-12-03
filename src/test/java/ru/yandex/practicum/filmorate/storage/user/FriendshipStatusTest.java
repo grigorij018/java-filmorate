@@ -39,10 +39,8 @@ class FriendshipStatusTest {
         // Добавляем в друзья (статус PENDING согласно ТЗ - односторонняя дружба)
         userStorage.addFriend(createdUser1.getId(), createdUser2.getId());
 
-
         // 1. Проверить, что пользователи созданы успешно
         assertThat(createdUser1.getId()).isNotNull();
         assertThat(createdUser2.getId()).isNotNull();
-        
     }
 }
