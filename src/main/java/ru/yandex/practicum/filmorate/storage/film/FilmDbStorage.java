@@ -70,7 +70,7 @@ public class FilmDbStorage implements FilmStorage {
             Integer filmId = Objects.requireNonNull(keyHolder.getKey()).intValue();
             film.setId(filmId);
 
-            // Сохраняем жанры в той же транзакции
+            // Сохраняем жанры с сохранением порядка
             saveGenresInTransaction(filmId, film.getGenres());
 
             log.info("Создан фильм с ID: {}", filmId);
@@ -181,7 +181,7 @@ public class FilmDbStorage implements FilmStorage {
             return findById(filmId).orElseThrow(() ->
                     new RuntimeException("Фильм с ID " + filmId + " не найден после удаления лайка"));
         } catch (DataAccessException e) {
-            log.error("Ошибка при удалении лайка фильму {} пользователем {}", filmId, userId, e);
+            log.error("Ошибка при удаления лайка фильму {} пользователем {}", filmId, userId, e);
             throw new RuntimeException("Не удалось удалить лайк", e);
         }
     }
@@ -223,7 +223,7 @@ public class FilmDbStorage implements FilmStorage {
         mpa.setDescription(rs.getString("mpa_description"));
         film.setMpa(mpa);
 
-        film.setGenres(new HashSet<>());
+        film.setGenres(new LinkedHashSet<>()); // Используем LinkedHashSet для сохранения порядка
         film.setLikes(new HashSet<>());
 
         return film;
@@ -252,25 +252,25 @@ public class FilmDbStorage implements FilmStorage {
         FROM film_genres fg
         JOIN genres g ON fg.genre_id = g.id
         WHERE fg.film_id IN (%s)
-        ORDER BY fg.film_id, g.id  -- Сортировка по ID жанра
+        ORDER BY fg.film_id, fg.genre_id  -- Сортировка по ID фильма и ID жанра в порядке вставки
         """, placeholders);
 
-        Map<Integer, List<Genre>> genresByFilmId = jdbcTemplate.query(sql, filmIds.toArray(), rs -> {
-            Map<Integer, List<Genre>> result = new HashMap<>();
+        Map<Integer, LinkedHashSet<Genre>> genresByFilmId = jdbcTemplate.query(sql, filmIds.toArray(), rs -> {
+            Map<Integer, LinkedHashSet<Genre>> result = new HashMap<>();
             while (rs.next()) {
                 Integer filmId = rs.getInt("film_id");
                 Genre genre = new Genre(
                         rs.getInt("genre_id"),
                         rs.getString("genre_name")
                 );
-                result.computeIfAbsent(filmId, k -> new ArrayList<>()).add(genre);
+                result.computeIfAbsent(filmId, k -> new LinkedHashSet<>()).add(genre);
             }
             return result;
         });
 
         for (Film film : films) {
-            List<Genre> genres = genresByFilmId.getOrDefault(film.getId(), new ArrayList<>());
-            film.setGenres(new HashSet<>(genres));
+            LinkedHashSet<Genre> genres = genresByFilmId.getOrDefault(film.getId(), new LinkedHashSet<>());
+            film.setGenres(genres);
         }
     }
 
@@ -315,16 +315,20 @@ public class FilmDbStorage implements FilmStorage {
                 "FROM genres g " +
                 "JOIN film_genres fg ON g.id = fg.genre_id " +
                 "WHERE fg.film_id = ? " +
-                "ORDER BY g.id";
+                "ORDER BY fg.genre_id";  // Сохраняем порядок вставки
 
-        List<Genre> genres = jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Genre genre = new Genre();
-            genre.setId(rs.getInt("id"));
-            genre.setName(rs.getString("name"));
-            return genre;
+        LinkedHashSet<Genre> genres = jdbcTemplate.query(sql, rs -> {
+            LinkedHashSet<Genre> result = new LinkedHashSet<>();
+            while (rs.next()) {
+                Genre genre = new Genre();
+                genre.setId(rs.getInt("id"));
+                genre.setName(rs.getString("name"));
+                result.add(genre);
+            }
+            return result;
         }, film.getId());
 
-        film.setGenres(new HashSet<>(genres));
+        film.setGenres(genres);
     }
 
     private void loadLikesForSingleFilm(Film film) {

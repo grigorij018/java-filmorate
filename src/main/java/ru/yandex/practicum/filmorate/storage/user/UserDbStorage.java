@@ -192,7 +192,6 @@ public class UserDbStorage implements UserStorage {
             JOIN friendships f1 ON u.id = f1.friend_id
             JOIN friendships f2 ON u.id = f2.friend_id
             WHERE f1.user_id = ? AND f2.user_id = ?
-            AND f1.status = 'CONFIRMED' AND f2.status = 'CONFIRMED'
             ORDER BY u.id
             """;
 
@@ -249,7 +248,7 @@ public class UserDbStorage implements UserStorage {
         String sql = String.format("""
             SELECT user_id, friend_id
             FROM friendships
-            WHERE user_id IN (%s) AND status = 'CONFIRMED'
+            WHERE user_id IN (%s)
             ORDER BY user_id
             """, placeholders);
 
@@ -270,7 +269,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     private void loadFriendsForSingleUser(User user) {
-        String sql = "SELECT friend_id FROM friendships WHERE user_id = ? AND status = 'CONFIRMED'";
+        String sql = "SELECT friend_id FROM friendships WHERE user_id = ?";
         List<Integer> friendIds = jdbcTemplate.queryForList(sql, Integer.class, user.getId());
         user.setFriends(new HashSet<>(friendIds));
     }
