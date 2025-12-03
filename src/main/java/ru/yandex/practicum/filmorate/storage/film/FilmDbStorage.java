@@ -177,8 +177,13 @@ public class FilmDbStorage implements FilmStorage {
             jdbcTemplate.update(deleteSql, film.getId());
 
             if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+                // Сортируем жанры по ID перед сохранением
+                List<Genre> sortedGenres = film.getGenres().stream()
+                        .sorted(Comparator.comparing(Genre::getId))
+                        .toList();
+
                 String insertSql = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
-                for (Genre genre : film.getGenres()) {
+                for (Genre genre : sortedGenres) {
                     jdbcTemplate.update(insertSql, film.getId(), genre.getId());
                 }
             }
@@ -194,7 +199,7 @@ public class FilmDbStorage implements FilmStorage {
             String sql = "SELECT g.id, g.name FROM genres g " +
                     "JOIN film_genres fg ON g.id = fg.genre_id " +
                     "WHERE fg.film_id = ? " +
-                    "ORDER BY g.id";
+                    "ORDER BY g.id ASC"; // Добавляем сортировку по ID
 
             List<Genre> genres = jdbcTemplate.query(sql, (rs, rowNum) -> {
                 Genre genre = new Genre();

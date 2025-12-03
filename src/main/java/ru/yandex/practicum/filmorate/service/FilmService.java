@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.time.LocalDate;
 import java.util.List;
@@ -19,6 +21,8 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final MpaStorage mpaStorage;
+    private final GenreStorage genreStorage;
 
     public List<Film> findAll() {
         return filmStorage.findAll();
@@ -26,6 +30,8 @@ public class FilmService {
 
     public Film create(Film film) {
         validateReleaseDate(film);
+        validateMpa(film);
+        validateGenres(film);
         return filmStorage.create(film);
     }
 
@@ -34,6 +40,9 @@ public class FilmService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID фильма обязателен");
         }
         validateReleaseDate(film);
+        validateMpa(film);
+        validateGenres(film);
+
         if (filmStorage.findById(film.getId()).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден");
         }
@@ -67,6 +76,31 @@ public class FilmService {
                     HttpStatus.BAD_REQUEST,
                     "Дата релиза — не раньше 28 декабря 1895 года"
             );
+        }
+    }
+
+    private void validateMpa(Film film) {
+        if (film.getMpa() == null || film.getMpa().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "MPA рейтинг обязателен");
+        }
+
+        // Проверяем существование MPA
+        boolean mpaExists = mpaStorage.findById(film.getMpa().getId()).isPresent();
+        if (!mpaExists) {
+            log.warn("MPA рейтинг с ID {} не найден", film.getMpa().getId());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Рейтинг MPA не найден");
+        }
+    }
+
+    private void validateGenres(Film film) {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            for (var genre : film.getGenres()) {
+                boolean genreExists = genreStorage.findById(genre.getId()).isPresent();
+                if (!genreExists) {
+                    log.warn("Жанр с ID {} не найден", genre.getId());
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Жанр не найден");
+                }
+            }
         }
     }
 

@@ -45,11 +45,15 @@ CREATE TABLE IF NOT EXISTS likes (
     );
 
 -- Создание таблицы friendships
+-- Создание таблицы friendships с правильной структурой
 CREATE TABLE IF NOT EXISTS friendships (
-                                           user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    friend_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    status VARCHAR(20) DEFAULT 'PENDING',
-    PRIMARY KEY (user_id, friend_id)
+                                           user_id INTEGER NOT NULL,
+                                           friend_id INTEGER NOT NULL,
+                                           status VARCHAR(20) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, friend_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
 -- Индексы для оптимизации запросов

@@ -109,17 +109,28 @@ public class UserDbStorage implements UserStorage {
             throw new RuntimeException("Пользователь с ID " + friendId + " не найден");
         }
 
-        // Односторонняя дружба согласно ТЗ
-        String sql = "MERGE INTO friendships (user_id, friend_id, status) KEY(user_id, friend_id) VALUES (?, ?, 'PENDING')";
-        jdbcTemplate.update(sql, userId, friendId);
-        log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
+        // В ТЗ указано, что дружба должна быть односторонней по умолчанию
+        // Друг подтверждает дружбу, вызывая addFriend со своей стороны
+        String checkSql = "SELECT COUNT(*) FROM friendships WHERE user_id = ? AND friend_id = ?";
+        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, friendId);
+
+        if (count == 0) {
+            // Добавляем запись о дружбе со статусом PENDING
+            String sql = "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, 'PENDING')";
+            jdbcTemplate.update(sql, userId, friendId);
+            log.info("Пользователь {} добавил в друзья пользователя {} (статус: PENDING)", userId, friendId);
+        }
     }
 
     @Override
     public void removeFriend(Integer userId, Integer friendId) {
+        // Удаляем запись о дружбе только для данного пользователя
         String sql = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
-        jdbcTemplate.update(sql, userId, friendId);
-        log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
+        int deleted = jdbcTemplate.update(sql, userId, friendId);
+
+        if (deleted > 0) {
+            log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
+        }
     }
 
     @Override
@@ -128,9 +139,10 @@ public class UserDbStorage implements UserStorage {
             throw new RuntimeException("Пользователь с ID " + userId + " не найден");
         }
 
+        // Получаем всех, кого пользователь добавил в друзья (независимо от статуса)
         String sql = "SELECT u.* FROM users u " +
                 "JOIN friendships f ON u.id = f.friend_id " +
-                "WHERE f.user_id = ? AND f.status = 'CONFIRMED'";
+                "WHERE f.user_id = ?";
 
         List<User> friends = jdbcTemplate.query(sql, this::mapRowToUser, userId);
         friends.forEach(this::loadFriends);
@@ -147,13 +159,19 @@ public class UserDbStorage implements UserStorage {
             throw new RuntimeException("Пользователь с ID " + otherUserId + " не найден");
         }
 
+        // Находим общих друзей (тех, кто есть в друзьях у обоих пользователей)
         String sql = "SELECT u.* FROM users u " +
-                "JOIN friendships f1 ON u.id = f1.friend_id " +
-                "JOIN friendships f2 ON u.id = f2.friend_id " +
-                "WHERE f1.user_id = ? AND f2.user_id = ? " +
-                "AND f1.status = 'CONFIRMED' AND f2.status = 'CONFIRMED'";
+                "WHERE u.id IN (" +
+                "  SELECT f1.friend_id FROM friendships f1 " +
+                "  WHERE f1.user_id = ?" +
+                "  INTERSECT " +
+                "  SELECT f2.friend_id FROM friendships f2 " +
+                "  WHERE f2.user_id = ?" +
+                ")";
 
-        return jdbcTemplate.query(sql, this::mapRowToUser, userId, otherUserId);
+        List<User> commonFriends = jdbcTemplate.query(sql, this::mapRowToUser, userId, otherUserId);
+        commonFriends.forEach(this::loadFriends);
+        return commonFriends;
     }
 
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
@@ -173,31 +191,34 @@ public class UserDbStorage implements UserStorage {
 
     private void loadFriends(User user) {
         if (user.getId() != null) {
-            // Загружаем только подтвержденных друзей
-            String sql = "SELECT friend_id FROM friendships WHERE user_id = ? AND status = 'CONFIRMED'";
+            // Загружаем ID всех друзей (тех, кого пользователь добавил в друзья)
+            String sql = "SELECT friend_id FROM friendships WHERE user_id = ?";
             List<Integer> friendIds = jdbcTemplate.queryForList(sql, Integer.class, user.getId());
             user.setFriends(new HashSet<>(friendIds));
         }
     }
 
-    // Метод для подтверждения дружбы (нужен для тестов)
-    public void confirmFriendship(Integer userId, Integer friendId) {
-        String sql = "UPDATE friendships SET status = 'CONFIRMED' WHERE user_id = ? AND friend_id = ?";
-        int updated = jdbcTemplate.update(sql, userId, friendId);
+    // Метод для проверки взаимной дружбы
+    public boolean isMutualFriendship(Integer userId, Integer friendId) {
+        String sql = "SELECT COUNT(*) FROM friendships f1 " +
+                "JOIN friendships f2 ON f1.user_id = f2.friend_id AND f1.friend_id = f2.user_id " +
+                "WHERE f1.user_id = ? AND f1.friend_id = ?";
 
-        if (updated > 0) {
-            log.info("Дружба между пользователями {} и {} подтверждена", userId, friendId);
-        } else {
-            log.warn("Не удалось подтвердить дружбу между пользователями {} и {}", userId, friendId);
-        }
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId, friendId);
+        return count != null && count > 0;
     }
 
-    // Метод для получения всех друзей (включая неподтвержденных) - для внутреннего использования
-    public List<User> getAllFriends(Integer userId) {
-        String sql = "SELECT u.* FROM users u " +
-                "JOIN friendships f ON u.id = f.friend_id " +
-                "WHERE f.user_id = ?";
+    // Метод для подтверждения дружбы (другая сторона также добавляет в друзья)
+    public void confirmFriendship(Integer userId, Integer friendId) {
+        // Проверяем, есть ли обратная запись
+        String checkReverseSql = "SELECT COUNT(*) FROM friendships WHERE user_id = ? AND friend_id = ?";
+        Integer reverseCount = jdbcTemplate.queryForObject(checkReverseSql, Integer.class, friendId, userId);
 
-        return jdbcTemplate.query(sql, this::mapRowToUser, userId);
+        if (reverseCount == 0) {
+            // Добавляем обратную запись
+            String insertSql = "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, 'CONFIRMED')";
+            jdbcTemplate.update(insertSql, friendId, userId);
+            log.info("Пользователь {} подтвердил дружбу с пользователем {}", friendId, userId);
+        }
     }
 }
