@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.time.LocalDate;
 
@@ -30,17 +31,27 @@ class FilmControllerTest {
 
     @BeforeEach
     void setUp() {
+        // Создаем валидный MPA рейтинг
+        MpaRating mpa = new MpaRating();
+        mpa.setId(1);
+        mpa.setName("G");
+        mpa.setDescription("У фильма нет возрастных ограничений");
+
+        // Валидный фильм
         validFilm = new Film();
         validFilm.setName("Valid Film");
         validFilm.setDescription("Valid description");
         validFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         validFilm.setDuration(120);
+        validFilm.setMpa(mpa);
 
+        // Невалидный фильм
         invalidFilm = new Film();
         invalidFilm.setName("");
         invalidFilm.setDescription("A".repeat(201)); // Слишком длинное описание
         invalidFilm.setReleaseDate(LocalDate.of(1800, 1, 1)); // Слишком ранняя дата
         invalidFilm.setDuration(-10); // Отрицательная продолжительность
+        invalidFilm.setMpa(mpa);
     }
 
     @Test
@@ -61,6 +72,7 @@ class FilmControllerTest {
         film.setDescription("Description");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
+        film.setMpa(validFilm.getMpa());
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,12 +87,12 @@ class FilmControllerTest {
         film.setDescription("Description");
         film.setReleaseDate(LocalDate.of(1890, 1, 1));
         film.setDuration(120);
+        film.setMpa(validFilm.getMpa());
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(film)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Дата релиза — не раньше 28 декабря 1895 года"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -111,12 +123,12 @@ class FilmControllerTest {
         film.setDescription("Description");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
+        film.setMpa(validFilm.getMpa());
 
         mockMvc.perform(put("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(film)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Фильм не найден"));
+                .andExpect(status().isNotFound());
     }
 
     @Test

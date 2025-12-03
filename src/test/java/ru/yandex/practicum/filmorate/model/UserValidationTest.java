@@ -32,7 +32,8 @@ class UserValidationTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
-        assertEquals("Некорректный формат email", violations.iterator().next().getMessage());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Некорректный формат email")));
     }
 
     @Test
@@ -44,7 +45,8 @@ class UserValidationTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
-        assertEquals("Логин не может быть пустым", violations.iterator().next().getMessage());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Логин не может быть пустым")));
     }
 
     @Test
@@ -56,7 +58,8 @@ class UserValidationTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
-        assertEquals("Логин не может содержать пробелы", violations.iterator().next().getMessage());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Логин не может содержать пробелы")));
     }
 
     @Test
@@ -68,7 +71,8 @@ class UserValidationTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
-        assertEquals("Дата рождения не может быть в будущем", violations.iterator().next().getMessage());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Дата рождения не может быть в будущем")));
     }
 
     @Test
@@ -83,13 +87,14 @@ class UserValidationTest {
     }
 
     @Test
-    void userWithNullName_ShouldSetNameToLogin() {
+    void userWithNullName_ShouldPassValidation() {
         User user = new User();
         user.setEmail("test@email.com");
         user.setLogin("testlogin");
         user.setName(null);
+        user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        // Проверяем логику установки имени (это тестируется в UserController)
-        assertNull(user.getName());
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        assertTrue(violations.isEmpty());
     }
 }

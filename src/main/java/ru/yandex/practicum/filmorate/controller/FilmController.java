@@ -6,8 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -51,5 +53,11 @@ public class FilmController {
     public List<Film> getPopularFilms(
             @RequestParam(defaultValue = "10") Integer count) {
         return filmService.getPopularFilms(count);
+    }
+
+    @GetMapping("/{id}/genres")
+    public Set<Genre> getFilmGenres(@PathVariable Integer id) {
+        Film film = filmService.findById(id);
+        return film.getGenres();
     }
 }

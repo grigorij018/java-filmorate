@@ -43,11 +43,13 @@ public class UserService {
     public void addFriend(Integer userId, Integer friendId) {
         validateUsersExist(userId, friendId);
         userStorage.addFriend(userId, friendId);
+        log.info("Пользователь {} добавил пользователя {} в друзья", userId, friendId);
     }
 
     public void removeFriend(Integer userId, Integer friendId) {
         validateUsersExist(userId, friendId);
         userStorage.removeFriend(userId, friendId);
+        log.info("Пользователь {} удалил пользователя {} из друзей", userId, friendId);
     }
 
     public List<User> getFriends(Integer userId) {
@@ -59,7 +61,10 @@ public class UserService {
 
     public List<User> getCommonFriends(Integer userId, Integer otherUserId) {
         validateUsersExist(userId, otherUserId);
-        return userStorage.getCommonFriends(userId, otherUserId);
+        List<User> commonFriends = userStorage.getCommonFriends(userId, otherUserId);
+        log.info("Найдено {} общих друзей между пользователями {} и {}",
+                commonFriends.size(), userId, otherUserId);
+        return commonFriends;
     }
 
     private void setDisplayName(User user) {
