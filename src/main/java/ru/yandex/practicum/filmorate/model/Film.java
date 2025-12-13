@@ -25,4 +25,5 @@ public class Film {
     private MpaRating mpa;
     private Set<Genre> genres = new LinkedHashSet<>(); // Используем LinkedHashSet вместо HashSet
     private Set<Integer> likes = new LinkedHashSet<>();
+    private Set<Director> directors = new LinkedHashSet<>();
 }

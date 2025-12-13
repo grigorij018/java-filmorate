@@ -60,4 +60,14 @@ public class FilmController {
         Film film = filmService.findById(id);
         return film.getGenres();
     }
+
+    @PutMapping("/{filmId}/director/{directorId}")
+    public Film addDirector(@PathVariable Integer filmId, @PathVariable Integer directorId) {
+        return filmService.addDirector(filmId, directorId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getDirectorsFilms(@PathVariable Integer directorId, @RequestParam(required = false) String sortBy) {
+        return filmService.getDirectorsFilms(directorId, sortBy);
+    }
 }
