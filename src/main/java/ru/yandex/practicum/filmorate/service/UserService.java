@@ -41,7 +41,6 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
         }
         userStorage.delete(userId);
-        log.info("Пользователь c ID:{} был удален", userId);
     }
 
     public User findById(Integer id) {

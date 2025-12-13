@@ -59,7 +59,6 @@ public class FilmService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден");
         }
         filmStorage.delete(filmId);
-        log.info("Фильм c ID:{} был удален", filmId);
     }
 
     public Film addLike(Integer filmId, Integer userId) {
