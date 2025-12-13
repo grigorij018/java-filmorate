@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+
 import java.util.List;
 
 @Slf4j
@@ -33,6 +34,14 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
         }
         return userStorage.update(user);
+    }
+
+    public void removeUser(Integer userId) {
+        if (userStorage.findById(userId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
+        }
+        userStorage.delete(userId);
+        log.info("Пользователь c ID:{} был удален", userId);
     }
 
     public User findById(Integer id) {
