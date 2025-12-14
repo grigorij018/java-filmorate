@@ -75,7 +75,7 @@ public class FilmService {
         }
 
         if (by == null || by.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "При поиске по подстроке должен быть задан by");
+            return filmStorage.searchFilms(query, false, true);
         }
 
         Set<String> fields = Arrays.stream(by.split(","))
@@ -86,8 +86,11 @@ public class FilmService {
         boolean searchByDirector = fields.contains("director");
         boolean searchByTitle = fields.contains("title");
 
-        if (!searchByDirector && !searchByTitle) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "by должен содержать director, title или оба");
+        if (!searchByTitle && !searchByDirector) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Параметр by должен содержать title, director или оба значения"
+            );
         }
 
         return filmStorage.searchFilms(query, searchByDirector, searchByTitle);
