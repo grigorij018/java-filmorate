@@ -6,12 +6,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,6 +67,31 @@ public class FilmService {
     public Film removeLike(Integer filmId, Integer userId) {
         validateFilmAndUserExist(filmId, userId);
         return filmStorage.removeLike(filmId, userId);
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+
+        if (query == null || query.isBlank()) {
+            return getPopularFilms(10);
+        }
+
+        if (by == null || by.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "При поиске по подстроке должен быть задан by");
+        }
+
+        Set<String> fields = Arrays.stream(by.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        boolean searchByDirector = fields.contains("director");
+        boolean searchByTitle = fields.contains("title");
+
+        if (!searchByDirector  && !searchByTitle) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "by должен содержать director, title или оба");
+        }
+
+        return filmStorage.searchFilms(query, searchByDirector, searchByTitle);
     }
 
     public List<Film> getPopularFilms(Integer count) {

@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.FilmService;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -47,6 +50,12 @@ public class FilmController {
     @DeleteMapping("/{id}/like/{userId}")
     public Film removeLike(@PathVariable Integer id, @PathVariable Integer userId) {
         return filmService.removeLike(id, userId);
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchFilms(@RequestParam(required = false) String query,
+                                  @RequestParam(required = false) String by) {
+        return filmService.searchFilms(query, by);
     }
 
     @GetMapping("/popular")
