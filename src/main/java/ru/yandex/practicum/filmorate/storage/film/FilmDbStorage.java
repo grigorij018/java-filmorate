@@ -10,6 +10,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -380,14 +381,14 @@ public class FilmDbStorage implements FilmStorage {
                 ORDER BY fd.film_id, d.id
                 """, placeholders);
 
-        Map<Long, Set<Director>> directorsByFilmId = new LinkedHashMap<>();
+        Map<Integer, Set<Director>> directorsByFilmId = new LinkedHashMap<>();
 
         jdbcTemplate.query(sql, filmIds.toArray(), rs -> {
-            Long filmId = rs.getLong("film_id");
-            Director director = new Director(
-                    rs.getInt("director_id"),
-                    rs.getString("director_name")
-            );
+            Integer filmId = rs.getInt("film_id");
+            Director director = Director.builder()
+                    .id(rs.getInt("director_id"))
+                    .name(rs.getString("director_name"))
+                    .build();
             directorsByFilmId.computeIfAbsent(filmId, k -> new LinkedHashSet<>()).add(director);
         });
 
