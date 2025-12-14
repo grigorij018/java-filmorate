@@ -6,10 +6,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
@@ -87,7 +86,7 @@ public class FilmService {
         boolean searchByDirector = fields.contains("director");
         boolean searchByTitle = fields.contains("title");
 
-        if (!searchByDirector  && !searchByTitle) {
+        if (!searchByDirector && !searchByTitle) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "by должен содержать director, title или оба");
         }
 

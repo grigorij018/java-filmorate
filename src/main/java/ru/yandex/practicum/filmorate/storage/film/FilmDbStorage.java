@@ -188,21 +188,21 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Film> searchFilms(String query, boolean searchByDirector, boolean searchByTitle){
+    public List<Film> searchFilms(String query, boolean searchByDirector, boolean searchByTitle) {
         String likeQuery = "%" + query.toLowerCase() + "%";
 
         StringBuilder sql = new StringBuilder("""
-        SELECT DISTINCT f.id, f.name, f.description, f.release_date, f.duration, 
-               m.id AS mpa_id,
-               m.name AS mpa_name, 
-               m.description AS mpa_description,
-               COUNT(l.user_id) AS like_count
-        FROM films f
-        LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
-        LEFT JOIN likes l ON f.id = l.film_id
-        LEFT JOIN film_director fd ON f.id = fd.film_id
-        LEFT JOIN director d ON fd.director_id = d.id
-        WHERE """);
+                SELECT DISTINCT f.id, f.name, f.description, f.release_date, f.duration, 
+                       m.id AS mpa_id,
+                       m.name AS mpa_name, 
+                       m.description AS mpa_description,
+                       COUNT(l.user_id) AS like_count
+                FROM films f
+                LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+                LEFT JOIN likes l ON f.id = l.film_id
+                LEFT JOIN film_director fd ON f.id = fd.film_id
+                LEFT JOIN director d ON fd.director_id = d.id
+                WHERE """);
 
         List<Object> params = new ArrayList<>();
         List<String> conditions = new ArrayList<>();
@@ -220,9 +220,9 @@ public class FilmDbStorage implements FilmStorage {
         sql.append(String.join(" OR ", conditions));
 
         sql.append("""
-        GROUP BY f.id, m.id, m.name, m.description
-        ORDER BY COUNT(l.user_id) DESC, f.id
-        """);
+                GROUP BY f.id, m.id, m.name, m.description
+                ORDER BY COUNT(l.user_id) DESC, f.id
+                """);
 
         List<Film> films = jdbcTemplate.query(sql.toString(), this::mapRowToFilm, params.toArray());
 
@@ -239,15 +239,15 @@ public class FilmDbStorage implements FilmStorage {
     @Transactional(readOnly = true)
     public List<Film> getPopularFilms(int count) {
         String sql = """
-            SELECT f.*, m.id as mpa_id, m.name as mpa_name, m.description as mpa_description,
-                   COUNT(l.user_id) as like_count
-            FROM films f
-            LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
-            LEFT JOIN likes l ON f.id = l.film_id
-            GROUP BY f.id, m.id, m.name, m.description
-            ORDER BY COUNT(l.user_id) DESC, f.id
-            LIMIT ?
-            """;
+                SELECT f.*, m.id as mpa_id, m.name as mpa_name, m.description as mpa_description,
+                       COUNT(l.user_id) as like_count
+                FROM films f
+                LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+                LEFT JOIN likes l ON f.id = l.film_id
+                GROUP BY f.id, m.id, m.name, m.description
+                ORDER BY COUNT(l.user_id) DESC, f.id
+                LIMIT ?
+                """;
 
         List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm, count);
 
@@ -297,12 +297,12 @@ public class FilmDbStorage implements FilmStorage {
                 .collect(Collectors.joining(", "));
 
         String sql = String.format("""
-        SELECT fg.film_id, g.id as genre_id, g.name as genre_name
-        FROM film_genres fg
-        JOIN genres g ON fg.genre_id = g.id
-        WHERE fg.film_id IN (%s)
-        ORDER BY fg.film_id, fg.genre_id  -- Сортировка по ID фильма и ID жанра в порядке вставки
-        """, placeholders);
+                SELECT fg.film_id, g.id as genre_id, g.name as genre_name
+                FROM film_genres fg
+                JOIN genres g ON fg.genre_id = g.id
+                WHERE fg.film_id IN (%s)
+                ORDER BY fg.film_id, fg.genre_id  -- Сортировка по ID фильма и ID жанра в порядке вставки
+                """, placeholders);
 
         Map<Integer, LinkedHashSet<Genre>> genresByFilmId = jdbcTemplate.query(sql, filmIds.toArray(), rs -> {
             Map<Integer, LinkedHashSet<Genre>> result = new HashMap<>();
@@ -337,11 +337,11 @@ public class FilmDbStorage implements FilmStorage {
                 .collect(Collectors.joining(", "));
 
         String sql = String.format("""
-            SELECT film_id, user_id
-            FROM likes
-            WHERE film_id IN (%s)
-            ORDER BY film_id
-            """, placeholders);
+                SELECT film_id, user_id
+                FROM likes
+                WHERE film_id IN (%s)
+                ORDER BY film_id
+                """, placeholders);
 
         Map<Integer, List<Integer>> likesByFilmId = jdbcTemplate.query(sql, filmIds.toArray(), rs -> {
             Map<Integer, List<Integer>> result = new HashMap<>();
