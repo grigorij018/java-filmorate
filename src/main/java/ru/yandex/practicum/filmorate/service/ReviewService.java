@@ -36,32 +36,6 @@ public class ReviewService {
             );
         }
 
-        if (review.getUserId() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID пользователя обязателен"
-            );
-        }
-        if (review.getUserId() <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID пользователя должен быть положительным"
-            );
-        }
-
-        if (review.getFilmId() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID фильма обязателен"
-            );
-        }
-        if (review.getFilmId() <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID фильма должен быть положительным"
-            );
-        }
-
         if (review.getContent().length() > 5000) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -75,6 +49,32 @@ public class ReviewService {
                 review.getUserId(), review.getFilmId());
 
         validateReview(review);
+
+        if (review.getUserId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Пользователь не найден"
+            );
+        }
+        if (review.getFilmId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Фильм не найден"
+            );
+        }
+
+        if (review.getUserId() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ID пользователя должен быть положительным"
+            );
+        }
+        if (review.getFilmId() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ID фильма должен быть положительным"
+            );
+        }
 
         validateUserAndFilmExist(review.getUserId(), review.getFilmId());
 
@@ -96,25 +96,45 @@ public class ReviewService {
     public Review update(Review review) {
         log.info("Обновление отзыва с ID: {}", review.getReviewId());
 
-        if (review.getReviewId() == null) {
+        if (review.getReviewId() == null || review.getReviewId() <= 0) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID отзыва обязателен для обновления"
-            );
-        }
-        if (review.getReviewId() <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID отзыва должен быть положительным"
+                    HttpStatus.NOT_FOUND,
+                    "Отзыв не найден"
             );
         }
 
         validateReview(review);
 
+        if (review.getUserId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Пользователь не найден"
+            );
+        }
+        if (review.getFilmId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Фильм не найден"
+            );
+        }
+
+        if (review.getUserId() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ID пользователя должен быть положительным"
+            );
+        }
+        if (review.getFilmId() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ID фильма должен быть положительным"
+            );
+        }
+
         Review existingReview = reviewStorage.findById(review.getReviewId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        String.format("Отзыв с ID %d не найден", review.getReviewId())
+                        "Отзыв не найден"
                 ));
 
         if (!existingReview.getUserId().equals(review.getUserId())) {
@@ -124,6 +144,7 @@ public class ReviewService {
                             review.getUserId(), existingReview.getUserId())
             );
         }
+
         review.setUseful(existingReview.getUseful());
 
         Review updatedReview = reviewStorage.update(review);
@@ -136,15 +157,15 @@ public class ReviewService {
 
         if (id == null || id <= 0) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID отзыва должен быть положительным"
+                    HttpStatus.NOT_FOUND,
+                    "Отзыв не найден"
             );
         }
 
         if (!reviewStorage.existsById(id)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    String.format("Отзыв с ID %d не найден", id)
+                    "Отзыв не найден"
             );
         }
 
@@ -157,15 +178,15 @@ public class ReviewService {
 
         if (id == null || id <= 0) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID отзыва должен быть положительным"
+                    HttpStatus.NOT_FOUND,
+                    "Отзыв не найден"
             );
         }
 
         return reviewStorage.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        String.format("Отзыв с ID %d не найден", id)
+                        "Отзыв не найден"
                 ));
     }
 
@@ -183,7 +204,7 @@ public class ReviewService {
             if (filmStorage.findById(filmId).isEmpty()) {
                 throw new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        String.format("Фильм с ID %d не найден", filmId)
+                        "Фильм не найден"
                 );
             }
 
@@ -246,14 +267,14 @@ public class ReviewService {
         if (userStorage.findById(userId).isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    String.format("Пользователь с ID %d не найден", userId)
+                    "Пользователь не найден"
             );
         }
 
         if (filmStorage.findById(filmId).isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    String.format("Фильм с ID %d не найден", filmId)
+                    "Фильм не найден"
             );
         }
     }
@@ -261,29 +282,29 @@ public class ReviewService {
     private void validateReviewAndUserExist(Integer reviewId, Integer userId) {
         if (reviewId == null || reviewId <= 0) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID отзыва должен быть положительным"
+                    HttpStatus.NOT_FOUND,
+                    "Отзыв не найден"
             );
         }
 
         if (userId == null || userId <= 0) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "ID пользователя должен быть положительным"
+                    HttpStatus.NOT_FOUND,
+                    "Пользователь не найден"
             );
         }
 
         if (!reviewStorage.existsById(reviewId)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    String.format("Отзыв с ID %d не найден", reviewId)
+                    "Отзыв не найден"
             );
         }
 
         if (userStorage.findById(userId).isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    String.format("Пользователь с ID %d не найден", userId)
+                    "Пользователь не найден"
             );
         }
     }

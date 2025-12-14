@@ -1,10 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
@@ -12,7 +10,6 @@ import ru.yandex.practicum.filmorate.service.ReviewService;
 import java.util.List;
 
 @Slf4j
-@Validated
 @RestController
 @RequestMapping("/reviews")
 @RequiredArgsConstructor
@@ -22,13 +19,13 @@ public class ReviewController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Review create(@Valid @RequestBody Review review) {
+    public Review create(@RequestBody Review review) {
         log.info("POST /reviews - создание нового отзыва");
         return reviewService.create(review);
     }
 
     @PutMapping
-    public Review update(@Valid @RequestBody Review review) {
+    public Review update(@RequestBody Review review) {
         log.info("PUT /reviews - обновление отзыва с ID: {}", review.getReviewId());
         return reviewService.update(review);
     }
