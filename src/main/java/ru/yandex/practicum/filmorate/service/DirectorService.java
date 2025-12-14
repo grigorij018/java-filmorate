@@ -9,7 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 
-import java.util.List;
+import java.util.Collection;
 
 @Slf4j
 @Service
@@ -17,7 +17,7 @@ import java.util.List;
 public class DirectorService {
     private final DirectorStorage directorStorage;
 
-    public List<Director> findAll() {
+    public Collection<Director> findAll() {
         return directorStorage.findAll();
     }
 
@@ -27,14 +27,19 @@ public class DirectorService {
     }
 
     public Director create(@Valid Director director) {
+        log.info("Добавляем режиссера в коллекцию");
         return directorStorage.create(director);
     }
 
     public Director update(@Valid Director director) {
+        log.info("Обновляем режиссера в коллекции");
+        findById(director.getId());
         return directorStorage.update(director);
     }
 
     public void delete(@Valid Integer id) {
-        directorStorage.delete(id);
+        log.info("Удаляем режиссера с id: {}", id);
+        if (!directorStorage.delete(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссер с таким id отсутствует в базе");
     }
 }

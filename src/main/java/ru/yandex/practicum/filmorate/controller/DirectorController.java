@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.service.DirectorService;
 
-import java.util.List;
+import java.util.Collection;
 
 @Slf4j
 @RestController
@@ -18,7 +18,7 @@ public class DirectorController {
     private final DirectorService directorService;
 
     @GetMapping
-    public List<Director> findAll() {
+    public Collection<Director> findAll() {
         return directorService.findAll();
     }
 

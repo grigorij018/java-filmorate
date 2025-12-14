@@ -18,7 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -31,7 +31,7 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Director> findAll() {
+    public Collection<Director> findAll() {
         String sql_find_all = """
                 SELECT *
                 FROM director
@@ -95,12 +95,8 @@ public class DirectorDbStorage implements DirectorStorage {
                     WHERE id = ?
                     """;
 
-            int updated = jdbcTemplate.update(sql_update_director,
+            jdbcTemplate.update(sql_update_director,
                     director.getName(), director.getId());
-
-            if (updated == 0) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр с ID %d не найден".formatted(director.getId()));
-            }
 
             log.info("Обновлен режиссёр с ID: {}", director.getId());
             return director;
@@ -114,18 +110,13 @@ public class DirectorDbStorage implements DirectorStorage {
     }
 
     @Override
-    public void delete(Integer id) {
+    public boolean delete(Integer id) {
         try {
             String sql_delete_director = """
                     DELETE FROM director
                     WHERE id = ?
                     """;
-            int deleted = jdbcTemplate.update(sql_delete_director, id);
-            if (deleted == 0) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр с ID %d не найден".formatted(id));
-            }
-
-            log.info("Удален режиссёр с ID: {}", id);
+            return jdbcTemplate.update(sql_delete_director, id) > 0;
         } catch (DataAccessException e) {
             log.error("Ошибка при удалении режиссёра с ID: {}", id, e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Не удалось удалить режиссёра", e);

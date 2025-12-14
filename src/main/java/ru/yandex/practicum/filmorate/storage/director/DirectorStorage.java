@@ -4,13 +4,13 @@ import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Director;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface DirectorStorage {
 
     @Transactional(readOnly = true)
-    List<Director> findAll();
+    Collection<Director> findAll();
 
     @Transactional(readOnly = true)
     Optional<Director> getById(Integer id);
@@ -22,5 +22,5 @@ public interface DirectorStorage {
     Director update(@Valid Director director);
 
     @Transactional
-    void delete(@Valid Integer id);
+    boolean delete(@Valid Integer id);
 }
