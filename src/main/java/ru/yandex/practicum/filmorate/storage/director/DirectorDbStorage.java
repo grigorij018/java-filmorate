@@ -32,24 +32,24 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     @Transactional(readOnly = true)
     public Collection<Director> findAll() {
-        String sql_find_all = """
+        String sqlQuery = """
                 SELECT *
                 FROM director
                 ORDER BY id
                 """;
-        return jdbcTemplate.query(sql_find_all, this::mapRowToDirector);
+        return jdbcTemplate.query(sqlQuery, this::mapRowToDirector);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Director> getById(Integer id) {
-        String sql_find_by_id = """
+        String sqlQuery = """
                 SELECT *
                 FROM director
                 WHERE id = ?
                 """;
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql_find_by_id, this::mapRowToDirector, id));
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuery, this::mapRowToDirector, id));
         } catch (DataAccessException e) {
             return Optional.empty();
         }
@@ -59,7 +59,7 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public Director create(Director director) {
         try {
-            String sql_create_director = """
+            String sqlQuery = """
                     INSERT INTO director (name)
                     VALUES (?)
                     """;
@@ -67,7 +67,7 @@ public class DirectorDbStorage implements DirectorStorage {
             KeyHolder keyHolder = new GeneratedKeyHolder();
 
             jdbcTemplate.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(sql_create_director, Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
                 ps.setObject(1, director.getName());
                 return ps;
             }, keyHolder);
@@ -90,12 +90,12 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public Director update(Director director) {
         try {
-            String sql_update_director = """
+            String sqlQuery = """
                     UPDATE director SET name = ?
                     WHERE id = ?
                     """;
 
-            jdbcTemplate.update(sql_update_director,
+            jdbcTemplate.update(sqlQuery,
                     director.getName(), director.getId());
 
             log.info("Обновлен режиссёр с ID: {}", director.getId());
@@ -112,11 +112,11 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     public boolean delete(Integer id) {
         try {
-            String sql_delete_director = """
+            String sqlQuery = """
                     DELETE FROM director
                     WHERE id = ?
                     """;
-            return jdbcTemplate.update(sql_delete_director, id) > 0;
+            return jdbcTemplate.update(sqlQuery, id) > 0;
         } catch (DataAccessException e) {
             log.error("Ошибка при удалении режиссёра с ID: {}", id, e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Не удалось удалить режиссёра", e);
