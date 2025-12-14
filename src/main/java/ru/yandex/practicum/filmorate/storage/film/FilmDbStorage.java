@@ -223,12 +223,12 @@ public class FilmDbStorage implements FilmStorage {
     @Transactional
     public Film addDirector(Integer filmId, Integer directorId) {
         try {
-            String sql_add_director = """
+            String sqlQuery = """
                     MERGE INTO film_director (film_id, director_id)
                     KEY(film_id, director_id)
                     VALUES (?, ?)
                     """;
-            jdbcTemplate.update(sql_add_director, filmId, directorId);
+            jdbcTemplate.update(sqlQuery, filmId, directorId);
             log.info("В фильм {} добавлен режиссёр {}", filmId, directorId);
 
             return findById(filmId).orElseThrow(() ->
@@ -468,7 +468,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private void saveDirectorInTransaction(Integer filmId, Set<Director> directors) {
-        String sql_add_director = """
+        String sqlQuery = """
                 INSERT INTO film_director (film_id, director_id)
                 VALUES (?, ?)
                 """;
@@ -476,7 +476,7 @@ public class FilmDbStorage implements FilmStorage {
             List<Object[]> batchArgs = directors.stream()
                     .map(director -> new Object[]{filmId, director.getId()})
                     .collect(Collectors.toList());
-            jdbcTemplate.batchUpdate(sql_add_director, batchArgs);
+            jdbcTemplate.batchUpdate(sqlQuery, batchArgs);
         }
     }
 
