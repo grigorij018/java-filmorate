@@ -14,8 +14,11 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -76,6 +79,34 @@ public class FilmService {
     public Film removeLike(Integer filmId, Integer userId) {
         validateFilmAndUserExist(filmId, userId);
         return filmStorage.removeLike(filmId, userId);
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+
+        if (query == null || query.isBlank()) {
+            return getPopularFilms(10);
+        }
+
+        if (by == null || by.isBlank()) {
+            return filmStorage.searchFilms(query, false, true);
+        }
+
+        Set<String> fields = Arrays.stream(by.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        boolean searchByDirector = fields.contains("director");
+        boolean searchByTitle = fields.contains("title");
+
+        if (!searchByTitle && !searchByDirector) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Параметр by должен содержать title, director или оба значения"
+            );
+        }
+
+        return filmStorage.searchFilms(query, searchByDirector, searchByTitle);
     }
 
     public List<Film> getPopularFilms(Integer count) {

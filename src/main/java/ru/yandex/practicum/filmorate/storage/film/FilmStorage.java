@@ -30,6 +30,9 @@ public interface FilmStorage {
     Film removeLike(Integer filmId, Integer userId);
 
     @Transactional(readOnly = true)
+    List<Film> searchFilms(String query, boolean searchByDirector, boolean searchByTitle);
+
+    @Transactional(readOnly = true)
     List<Film> getPopularFilms(int count);
 
     @Transactional
