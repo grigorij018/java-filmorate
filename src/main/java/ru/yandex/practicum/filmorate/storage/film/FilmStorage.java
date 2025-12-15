@@ -33,7 +33,7 @@ public interface FilmStorage {
     List<Film> searchFilms(String query, boolean searchByDirector, boolean searchByTitle);
 
     @Transactional(readOnly = true)
-    List<Film> getPopularFilms(int count);
+    List<Film> getPopularFilms(int count, Integer genreId, Integer year);
 
     @Transactional
     Film addDirector(Integer filmId, Integer directorId);

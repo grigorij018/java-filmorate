@@ -1,3 +1,13 @@
+DROP TABLE IF EXISTS film_director;
+DROP TABLE IF EXISTS director;
+DROP TABLE IF EXISTS friendships;
+DROP TABLE IF EXISTS likes;
+DROP TABLE IF EXISTS film_genres;
+DROP TABLE IF EXISTS films;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS genres;
+DROP TABLE IF EXISTS mpa_ratings;
+
 -- Создание таблицы mpa_ratings
 CREATE TABLE IF NOT EXISTS mpa_ratings
 (

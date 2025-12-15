@@ -84,7 +84,7 @@ public class FilmService {
     public List<Film> searchFilms(String query, String by) {
 
         if (query == null || query.isBlank()) {
-            return getPopularFilms(10);
+            return getPopularFilms(10, null, null);
         }
 
         if (by == null || by.isBlank()) {
@@ -109,9 +109,9 @@ public class FilmService {
         return filmStorage.searchFilms(query, searchByDirector, searchByTitle);
     }
 
-    public List<Film> getPopularFilms(Integer count) {
+    public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         int filmsCount = count != null ? count : 10;
-        return filmStorage.getPopularFilms(filmsCount);
+        return filmStorage.getPopularFilms(filmsCount, genreId, year);
     }
 
     public Film addDirector(Integer filmId, Integer directorId) {
