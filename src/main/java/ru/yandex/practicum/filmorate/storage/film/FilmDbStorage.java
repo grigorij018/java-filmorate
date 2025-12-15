@@ -264,10 +264,10 @@ public class FilmDbStorage implements FilmStorage {
     @Transactional(readOnly = true)
     public List<Film> getPopularFilms(int count, Integer genreId, Integer year) {
         StringBuilder sql = new StringBuilder("""
-            SELECT 
-                f.*, 
-                m.id as mpa_id, 
-                m.name as mpa_name, 
+            SELECT
+                f.*,
+                m.id as mpa_id,
+                m.name as mpa_name,
                 m.description as mpa_description,
                 COUNT(l.user_id) as like_count
             FROM films f
