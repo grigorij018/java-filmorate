@@ -198,6 +198,69 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Film> searchFilms(String query, boolean searchByDirector, boolean searchByTitle) {
+        String likeQuery = "%" + query.toLowerCase() + "%";
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT DISTINCT
+            f.id,
+            f.name,
+            f.description,
+            f.release_date,
+            f.duration,
+            m.id AS mpa_id,
+            m.name AS mpa_name,
+            m.description AS mpa_description,
+            COUNT(l.user_id) AS like_count
+        FROM films f
+        LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+        LEFT JOIN likes l ON f.id = l.film_id
+        LEFT JOIN film_director fd ON f.id = fd.film_id
+        LEFT JOIN director d ON fd.director_id = d.id
+        """);
+
+        List<Object> params = new ArrayList<>();
+        List<String> conditions = new ArrayList<>();
+
+        if (searchByTitle) {
+            conditions.add("LOWER(f.name) LIKE ?");
+            params.add(likeQuery);
+        }
+
+        if (searchByDirector) {
+            conditions.add("LOWER(d.name) LIKE ?");
+            params.add(likeQuery);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ");
+            sql.append(String.join(" OR ", conditions));
+        }
+
+        sql.append("""
+        GROUP BY
+            f.id,
+            m.id,
+            m.name,
+            m.description
+        ORDER BY
+            COUNT(l.user_id) DESC,
+            f.id
+        """);
+
+        List<Film> films = jdbcTemplate.query(sql.toString(), this::mapRowToFilm, params.toArray());
+
+        if (!films.isEmpty()) {
+            loadGenresForFilms(films);
+            loadLikesForFilms(films);
+            loadDirectorsForFilms(films);
+        }
+
+        return films;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Film> getPopularFilms(int count) {
         String sql = """
                 SELECT f.*, m.id as mpa_id, m.name as mpa_name, m.description as mpa_description,
