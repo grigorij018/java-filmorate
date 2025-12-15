@@ -39,6 +39,12 @@ public class FilmController {
         return filmService.update(film);
     }
 
+    @DeleteMapping("/{filmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFilm(@PathVariable Integer filmId) {
+        filmService.removeFilm(filmId);
+    }
+
     @PutMapping("/{id}/like/{userId}")
     public Film addLike(@PathVariable Integer id, @PathVariable Integer userId) {
         return filmService.addLike(id, userId);
@@ -47,6 +53,12 @@ public class FilmController {
     @DeleteMapping("/{id}/like/{userId}")
     public Film removeLike(@PathVariable Integer id, @PathVariable Integer userId) {
         return filmService.removeLike(id, userId);
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchFilms(@RequestParam(required = false) String query,
+                                  @RequestParam(required = false) String by) {
+        return filmService.searchFilms(query, by);
     }
 
     @GetMapping("/popular")
@@ -59,5 +71,15 @@ public class FilmController {
     public Set<Genre> getFilmGenres(@PathVariable Integer id) {
         Film film = filmService.findById(id);
         return film.getGenres();
+    }
+
+    @PutMapping("/{filmId}/director/{directorId}")
+    public Film addDirector(@PathVariable Integer filmId, @PathVariable Integer directorId) {
+        return filmService.addDirector(filmId, directorId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getDirectorsFilms(@PathVariable Integer directorId, @RequestParam(required = false) String sortBy) {
+        return filmService.getDirectorsFilms(directorId, sortBy);
     }
 }
