@@ -35,6 +35,13 @@ public class UserService {
         return userStorage.update(user);
     }
 
+    public void removeUser(Integer userId) {
+        if (userStorage.findById(userId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
+        }
+        userStorage.delete(userId);
+    }
+
     public User findById(Integer id) {
         return userStorage.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден"));
