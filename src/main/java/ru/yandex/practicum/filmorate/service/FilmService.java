@@ -49,6 +49,13 @@ public class FilmService {
         return filmStorage.update(film);
     }
 
+    public void removeFilm(Integer filmId) {
+        if (filmStorage.findById(filmId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден");
+        }
+        filmStorage.delete(filmId);
+    }
+
     public Film findById(Integer id) {
         return filmStorage.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден"));
