@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,7 +12,11 @@ public class Review {
     private Integer reviewId;
     private String content;
     private Boolean isPositive;
+
+    @NotNull(message = "ID пользователя обязателен")
     private Integer userId;
+
+    @NotNull(message = "ID фильма обязателен")
     private Integer filmId;
     private Integer useful = 0;
     private LocalDateTime createdAt;
