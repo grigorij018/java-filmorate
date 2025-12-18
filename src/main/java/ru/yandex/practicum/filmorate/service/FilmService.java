@@ -6,10 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.FeedEvent;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -31,6 +33,7 @@ public class FilmService {
     private final MpaStorage mpaStorage;
     private final GenreStorage genreStorage;
     private final DirectorStorage directorStorage;
+    private final FeedStorage feedStorage;
 
     public List<Film> findAll() {
         return filmStorage.findAll();
@@ -73,11 +76,17 @@ public class FilmService {
 
     public Film addLike(Integer filmId, Integer userId) {
         validateFilmAndUserExist(filmId, userId);
+
+        feedStorage.createLikeEvent(userId, filmId, FeedEvent.Operation.ADD);
+
         return filmStorage.addLike(filmId, userId);
     }
 
     public Film removeLike(Integer filmId, Integer userId) {
         validateFilmAndUserExist(filmId, userId);
+
+        feedStorage.createLikeEvent(userId, filmId, FeedEvent.Operation.REMOVE);
+
         return filmStorage.removeLike(filmId, userId);
     }
 
