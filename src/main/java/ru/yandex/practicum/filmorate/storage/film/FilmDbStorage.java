@@ -590,7 +590,7 @@ public class FilmDbStorage implements FilmStorage {
             FROM films f
             LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
             LEFT JOIN likes l ON f.id = l.film_id
-            WHERE f.id IN (
+                WHERE f.id IN(
                 -- Фильмы, которые лайкнул первый пользователь
                 SELECT film_id FROM likes WHERE user_id = ?
                 INTERSECT
