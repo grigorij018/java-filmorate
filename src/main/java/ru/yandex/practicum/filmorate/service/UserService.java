@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.model.FeedEvent;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.util.List;
 
@@ -14,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
+    private final FeedStorage feedStorage;
 
     public List<User> findAll() {
         return userStorage.findAll();
@@ -51,12 +54,17 @@ public class UserService {
         validateUsersExist(userId, friendId);
         userStorage.addFriend(userId, friendId);
         log.info("Пользователь {} добавил пользователя {} в друзья", userId, friendId);
+
+        feedStorage.createFriendEvent(userId, friendId, FeedEvent.Operation.ADD);
     }
+
 
     public void removeFriend(Integer userId, Integer friendId) {
         validateUsersExist(userId, friendId);
         userStorage.removeFriend(userId, friendId);
         log.info("Пользователь {} удалил пользователя {} из друзей", userId, friendId);
+
+        feedStorage.createFriendEvent(userId, friendId, FeedEvent.Operation.REMOVE);
     }
 
     public List<User> getFriends(Integer userId) {

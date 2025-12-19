@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.model.FeedEvent;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -20,6 +22,7 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final FeedStorage feedStorage;
 
     private void validateReview(Review review) {
         if (review.getContent() == null || review.getContent().isBlank()) {
@@ -78,6 +81,9 @@ public class ReviewService {
 
         Review createdReview = reviewStorage.create(review);
         log.info("Создан отзыв с ID: {}", createdReview.getReviewId());
+
+        feedStorage.createReviewEvent(review.getUserId(), createdReview.getReviewId(), FeedEvent.Operation.ADD);
+
         return createdReview;
     }
 
@@ -111,6 +117,9 @@ public class ReviewService {
 
         Review updatedReview = reviewStorage.update(review);
         log.info("Отзыв с ID {} обновлен", updatedReview.getReviewId());
+
+        feedStorage.createReviewEvent(review.getUserId(), review.getReviewId(), FeedEvent.Operation.UPDATE);
+
         return updatedReview;
     }
 
@@ -131,8 +140,13 @@ public class ReviewService {
             );
         }
 
+        // Получаем отзыв перед удалением, чтобы узнать userId
+        Review review = findById(id);
+
         reviewStorage.delete(id);
         log.info("Отзыв с ID {} удален", id);
+
+        feedStorage.createReviewEvent(review.getUserId(), id, FeedEvent.Operation.REMOVE);
     }
 
     public Review findById(Integer id) {
