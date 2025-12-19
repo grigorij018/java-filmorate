@@ -259,24 +259,46 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    // Оптимизированная версия
     @Override
     @Transactional(readOnly = true)
-    public List<Film> getPopularFilms(int count) {
-        String sql = """
-                SELECT f.*, m.id as mpa_id, m.name as mpa_name, m.description as mpa_description,
-                       COUNT(l.user_id) as like_count
-                FROM films f
-                LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
-                LEFT JOIN likes l ON f.id = l.film_id
-                GROUP BY f.id, m.id, m.name, m.description
-                ORDER BY COUNT(l.user_id) DESC, f.id
-                LIMIT ?
-                """;
+    public List<Film> getPopularFilms(int count, Integer genreId, Integer year) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT
+                f.*,
+                m.id as mpa_id,
+                m.name as mpa_name,
+                m.description as mpa_description,
+                COUNT(l.user_id) as like_count
+            FROM films f
+            LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+            LEFT JOIN likes l ON f.id = l.film_id
+            """);
 
-        List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm, count);
+        List<Object> params = new ArrayList<>();
+
+        if (genreId != null) {
+            sql.append(" WHERE EXISTS (SELECT 1 FROM film_genres fg WHERE fg.film_id = f.id AND fg.genre_id = ?)");
+            params.add(genreId);
+        }
+
+        if (year != null) {
+            sql.append(genreId != null ? " AND" : " WHERE");
+            sql.append(" EXTRACT(YEAR FROM f.release_date) = ?");
+            params.add(year);
+        }
+
+        sql.append(" GROUP BY f.id, m.id, m.name, m.description");
+        sql.append(" ORDER BY COUNT(l.user_id) DESC, f.id");
+        sql.append(" LIMIT ?");
+        params.add(count);
+
+        List<Film> films = jdbcTemplate.query(sql.toString(), this::mapRowToFilm, params.toArray());
 
         if (!films.isEmpty()) {
             loadGenresForFilms(films);
+            loadLikesForFilms(films);
+            loadDirectorsForFilms(films);
         }
 
         return films;
@@ -338,6 +360,7 @@ public class FilmDbStorage implements FilmStorage {
 
         film.setGenres(new LinkedHashSet<>()); // Используем LinkedHashSet для сохранения порядка
         film.setLikes(new HashSet<>());
+        film.setDirectors(new LinkedHashSet<>());
 
         return film;
     }
