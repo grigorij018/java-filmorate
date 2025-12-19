@@ -114,4 +114,73 @@ class FilmServiceTest {
         verify(genreStorage, times(1)).findById(999);
         verify(filmStorage, never()).create(any(Film.class));
     }
+
+    @Test
+    void getCommonFilms_ShouldReturnFilmsWhenUsersExist() {
+        // Arrange
+        Integer userId = 1;
+        Integer friendId = 2;
+
+        User user = new User();
+        user.setId(userId);
+        User friend = new User();
+        friend.setId(friendId);
+
+        Film film1 = new Film();
+        film1.setId(1);
+        Film film2 = new Film();
+        film2.setId(2);
+
+        when(userStorage.findById(userId)).thenReturn(Optional.of(user));
+        when(userStorage.findById(friendId)).thenReturn(Optional.of(friend));
+        when(filmStorage.getCommonFilms(userId, friendId)).thenReturn(List.of(film1, film2));
+
+        // Act
+        List<Film> result = filmService.getCommonFilms(userId, friendId);
+
+        // Assert
+        assertEquals(2, result.size());
+        verify(userStorage, times(2)).findById(anyInt());
+        verify(filmStorage, times(1)).getCommonFilms(userId, friendId);
+    }
+
+    @Test
+    void getCommonFilms_ShouldThrowExceptionWhenUserNotFound() {
+        // Arrange
+        Integer userId = 1;
+        Integer friendId = 2;
+
+        when(userStorage.findById(userId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResponseStatusException.class, () -> {
+            filmService.getCommonFilms(userId, friendId);
+        });
+
+        verify(userStorage, times(1)).findById(userId);
+        verify(userStorage, never()).findById(friendId);
+        verify(filmStorage, never()).getCommonFilms(anyInt(), anyInt());
+    }
+
+    @Test
+    void getCommonFilms_ShouldThrowExceptionWhenFriendNotFound() {
+        // Arrange
+        Integer userId = 1;
+        Integer friendId = 2;
+
+        User user = new User();
+        user.setId(userId);
+
+        when(userStorage.findById(userId)).thenReturn(Optional.of(user));
+        when(userStorage.findById(friendId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResponseStatusException.class, () -> {
+            filmService.getCommonFilms(userId, friendId);
+        });
+
+        verify(userStorage, times(1)).findById(userId);
+        verify(userStorage, times(1)).findById(friendId);
+        verify(filmStorage, never()).getCommonFilms(anyInt(), anyInt());
+    }
 }
