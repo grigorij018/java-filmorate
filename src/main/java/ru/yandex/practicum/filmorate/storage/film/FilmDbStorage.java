@@ -581,7 +581,7 @@ public class FilmDbStorage implements FilmStorage {
     @Transactional(readOnly = true)
     public List<Film> getCommonFilms(Integer userId, Integer friendId) {
         String sql = """
-            SELECT 
+            SELECT
                 f.*,
                 m.id as mpa_id,
                 m.name as mpa_name,
