@@ -576,4 +576,39 @@ public class FilmDbStorage implements FilmStorage {
         if (directors != null && !directors.isEmpty())
             saveDirectorInTransaction(filmId, directors);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+        String sql = """
+            SELECT
+                f.*,
+                m.id as mpa_id,
+                m.name as mpa_name,
+                m.description as mpa_description,
+                COUNT(l.user_id) as like_count
+            FROM films f
+            LEFT JOIN mpa_ratings m ON f.mpa_id = m.id
+            LEFT JOIN likes l ON f.id = l.film_id
+                WHERE f.id IN(
+                -- Фильмы, которые лайкнул первый пользователь
+                SELECT film_id FROM likes WHERE user_id = ?
+                INTERSECT
+                -- Фильмы, которые лайкнул второй пользователь
+                SELECT film_id FROM likes WHERE user_id = ?
+            )
+            GROUP BY f.id, m.id, m.name, m.description
+            ORDER BY COUNT(l.user_id) DESC, f.id
+            """;
+
+        List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm, userId, friendId);
+
+        if (!films.isEmpty()) {
+            loadGenresForFilms(films);
+            loadLikesForFilms(films);
+            loadDirectorsForFilms(films);
+        }
+
+        return films;
+    }
 }

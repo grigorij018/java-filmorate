@@ -210,4 +210,17 @@ public class FilmService {
                 .sorted((film1, film2) -> film2.getLikes().size() - film1.getLikes().size())
                 .toList();
     }
+
+    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
+        validateUserExists(userId);
+        validateUserExists(friendId);
+
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
+    private void validateUserExists(Integer userId) {
+        if (userStorage.findById(userId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + userId + " не найден");
+        }
+    }
 }
