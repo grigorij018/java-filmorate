@@ -43,4 +43,7 @@ public interface FilmStorage {
 
     @Transactional(readOnly = true)
     List<Film> getCommonFilms(Integer userId, Integer friendId);
+
+    @Transactional(readOnly = true)
+    List<Film> getRecommendedFilms(Integer userId, Integer similarUserId);
 }
