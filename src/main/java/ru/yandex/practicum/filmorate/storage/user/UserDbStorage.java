@@ -281,7 +281,7 @@ public class UserDbStorage implements UserStorage {
                 SELECT l2.user_id
                 FROM likes l1
                 JOIN likes l2 ON l1.film_id = l2.film_id
-                WHERE l1.user_id = ? 
+                WHERE l1.user_id = ?
                   AND l2.user_id != ?
                 GROUP BY l2.user_id
                 ORDER BY COUNT(*) DESC
