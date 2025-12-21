@@ -191,10 +191,10 @@ public class FilmService {
 
     private void validateFilmAndDirectorExists(Integer filmId, Integer directorId) {
         if (filmStorage.findById(filmId).isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");
 
         if (directorStorage.getById(directorId).isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");
     }
 
     private void validateDirector(Integer directorId) {

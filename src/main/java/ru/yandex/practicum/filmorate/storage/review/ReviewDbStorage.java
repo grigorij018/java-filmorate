@@ -11,7 +11,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Review;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,6 +82,9 @@ public class ReviewDbStorage implements ReviewStorage {
     @Override
     @Transactional
     public void delete(Integer id) {
+        String deleteLikesSql = "DELETE FROM review_likes WHERE review_id = ?";
+        jdbcTemplate.update(deleteLikesSql, id);
+
         String sql = "DELETE FROM reviews WHERE id = ?";
         int deleted = jdbcTemplate.update(sql, id);
 
@@ -250,5 +256,12 @@ public class ReviewDbStorage implements ReviewStorage {
         }, review.getReviewId());
 
         review.setUseful(review.calculateUseful());
+    }
+
+    @Override
+    public boolean existsByUserIdAndFilmId(Integer userId, Integer filmId) {
+        String sql = "SELECT COUNT(*) FROM reviews WHERE user_id = ? AND film_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId, filmId);
+        return count != null && count > 0;
     }
 }
