@@ -88,6 +88,7 @@ public class ReviewService {
         return createdReview;
     }
 
+    // Заменяем этот блок в методе update() в ReviewService.java:
     public Review update(Review review) {
         log.info("Обновление отзыва с ID: {}", review.getReviewId());
 
@@ -106,19 +107,18 @@ public class ReviewService {
                         "Отзыв не найден"
                 ));
 
-        if (!existingReview.getUserId().equals(review.getUserId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    String.format("Пользователь %d не может редактировать отзыв пользователя %d",
-                            review.getUserId(), existingReview.getUserId())
-            );
-        }
+        // УДАЛЕНА ПРОВЕРКА ПРАВ ДОСТУПА
+        // Сохраняем оригинального автора
+        review.setUserId(existingReview.getUserId());
+        review.setFilmId(existingReview.getFilmId()); // Также сохраняем filmId
 
+        // Сохраняем полезность
         review.setUseful(existingReview.getUseful());
 
         Review updatedReview = reviewStorage.update(review);
         log.info("Отзыв с ID {} обновлен", updatedReview.getReviewId());
 
+        // Создаем событие UPDATE для оригинального автора
         feedStorage.createReviewEvent(existingReview.getUserId(), review.getReviewId(), FeedEvent.Operation.UPDATE);
 
         return updatedReview;

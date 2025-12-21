@@ -55,41 +55,23 @@ public class DirectorDbStorage implements DirectorStorage {
         }
     }
 
-    @Override
-    @Transactional
     public Director create(Director director) {
-        try {
-            // Если приходит режиссер с ID, который уже существует - обновляем
-            if (director.getId() != null) {
-                Optional<Director> existingDirector = getById(director.getId());
-                if (existingDirector.isPresent()) {
-                    // Режиссер существует - обновляем его
-                    return update(director);
-                } else {
-                    // Режиссера нет - создаем с указанным ID
-                    String sqlQuery = "INSERT INTO director (id, name) VALUES (?, ?)";
+        // Если директор приходит с ID, игнорируем его и создаем новый
+        String sqlQuery = "INSERT INTO director (name) VALUES (?)";
 
-                    try {
-                        jdbcTemplate.update(sqlQuery, director.getId(), director.getName());
-                        log.info("Создан режиссёр с указанным ID: {}", director.getId());
-                        return director;
-                    } catch (DataIntegrityViolationException e) {
-                        // Если ID занят (например, автоинкремент пропустил), используем автоинкремент
-                        return createWithAutoIncrement(director);
-                    }
-                }
-            }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
 
-            // Если ID не указан - используем автоинкремент
-            return createWithAutoIncrement(director);
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, director.getName());
+            return ps;
+        }, keyHolder);
 
-        } catch (DataIntegrityViolationException e) {
-            log.error("Ошибка при добавлении режиссёра с именем: {}", director.getName(), e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Режиссёр с таким именем уже существует", e);
-        } catch (DataAccessException e) {
-            log.error("Ошибка при добавлении режиссёра: {}", director.getName(), e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Не удалось добавить режиссёра", e);
-        }
+        Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        director.setId(id);
+
+        log.info("Добавлен новый режиссёр с ID: {}", id);
+        return director;
     }
 
     private Director createWithAutoIncrement(Director director) {

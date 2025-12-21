@@ -97,7 +97,7 @@ public class FeedService {
                 .userId(userId)
                 .entityId(reviewId)
                 .eventType(FeedEvent.EventType.REVIEW)
-                .operation(FeedEvent.Operation.REMOVE)
+                .operation(FeedEvent.Operation.REMOVE) // Убедитесь, что это REMOVE
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
         log.info("Создание события REVIEW REMOVE: userId={}, reviewId={}, timestamp={}",
