@@ -273,4 +273,25 @@ public class UserDbStorage implements UserStorage {
         List<Integer> friendIds = jdbcTemplate.queryForList(sql, Integer.class, user.getId());
         user.setFriends(new HashSet<>(friendIds));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Integer findMostSimilarUser(Integer userId) {
+        String sql = """
+                SELECT l2.user_id
+                FROM likes l1
+                JOIN likes l2 ON l1.film_id = l2.film_id
+                WHERE l1.user_id = ?
+                  AND l2.user_id != ?
+                GROUP BY l2.user_id
+                ORDER BY COUNT(*) DESC
+                LIMIT 1
+                """;
+
+        try {
+            return jdbcTemplate.queryForObject(sql, Integer.class, userId, userId);
+        } catch (EmptyResultDataAccessException e) {
+            return null; // Нет похожих пользователей
+        }
+    }
 }

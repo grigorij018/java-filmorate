@@ -39,6 +39,12 @@ public class FilmController {
         return filmService.update(film);
     }
 
+    @DeleteMapping("/{filmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFilm(@PathVariable Integer filmId) {
+        filmService.removeFilm(filmId);
+    }
+
     @PutMapping("/{id}/like/{userId}")
     public Film addLike(@PathVariable Integer id, @PathVariable Integer userId) {
         return filmService.addLike(id, userId);
@@ -49,15 +55,41 @@ public class FilmController {
         return filmService.removeLike(id, userId);
     }
 
+    @GetMapping("/search")
+    public List<Film> searchFilms(@RequestParam(required = false) String query,
+                                  @RequestParam(required = false) String by) {
+        return filmService.searchFilms(query, by);
+    }
+
     @GetMapping("/popular")
     public List<Film> getPopularFilms(
-            @RequestParam(defaultValue = "10") Integer count) {
-        return filmService.getPopularFilms(count);
+            @RequestParam(defaultValue = "10") Integer count,
+            @RequestParam(required = false) Integer genreId,
+            @RequestParam(required = false) Integer year) {
+        return filmService.getPopularFilms(count, genreId, year);
     }
 
     @GetMapping("/{id}/genres")
     public Set<Genre> getFilmGenres(@PathVariable Integer id) {
         Film film = filmService.findById(id);
         return film.getGenres();
+    }
+
+    @PutMapping("/{filmId}/director/{directorId}")
+    public Film addDirector(@PathVariable Integer filmId, @PathVariable Integer directorId) {
+        return filmService.addDirector(filmId, directorId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getDirectorsFilms(@PathVariable Integer directorId, @RequestParam(required = false) String sortBy) {
+        return filmService.getDirectorsFilms(directorId, sortBy);
+    }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(
+            @RequestParam Integer userId,
+            @RequestParam Integer friendId) {
+        log.info("GET /films/common?userId={}&friendId={} - получение общих фильмов", userId, friendId);
+        return filmService.getCommonFilms(userId, friendId);
     }
 }

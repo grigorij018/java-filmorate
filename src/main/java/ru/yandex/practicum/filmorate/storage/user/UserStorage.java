@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.User;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -38,4 +39,7 @@ public interface UserStorage {
 
     @Transactional(readOnly = true)
     List<User> getCommonFriends(Integer userId, Integer otherUserId);
+
+    @Transactional(readOnly = true)
+    Integer findMostSimilarUser(Integer userId);
 }

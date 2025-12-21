@@ -1,5 +1,5 @@
 -- Заполнение таблицы mpa_ratings
-MERGE INTO mpa_ratings (id, name, description) KEY(id) VALUES
+MERGE INTO mpa_ratings (id, name, description) KEY (id) VALUES
     (1, 'G', 'У фильма нет возрастных ограничений'),
     (2, 'PG', 'Детям рекомендуется смотреть фильм с родителями'),
     (3, 'PG-13', 'Детям до 13 лет просмотр не желателен'),
@@ -7,10 +7,19 @@ MERGE INTO mpa_ratings (id, name, description) KEY(id) VALUES
     (5, 'NC-17', 'Лицам до 18 лет просмотр запрещён');
 
 -- Заполнение таблицы genres
-MERGE INTO genres (id, name) KEY(id) VALUES
+MERGE INTO genres (id, name) KEY (id) VALUES
     (1, 'Комедия'),
     (2, 'Драма'),
     (3, 'Мультфильм'),
     (4, 'Триллер'),
     (5, 'Документальный'),
     (6, 'Боевик');
+
+-- НЕ ЗАПОЛНЯЕМ ТАБЛИЦУ DIRECTOR! Тесты ожидают пустую таблицу
+-- MERGE INTO director (name) KEY (name) VALUES
+--     ('Квентин Тарантино'),
+--     ('Кристофер Нолан'),
+--     ('Мартин Скорсезе'),
+--     ('Дэвид Финчер'),
+--     ('Стивен Спилберг'),
+--     ('Джеймс Кэмерон');

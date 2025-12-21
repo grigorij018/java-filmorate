@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Film;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -29,5 +30,20 @@ public interface FilmStorage {
     Film removeLike(Integer filmId, Integer userId);
 
     @Transactional(readOnly = true)
-    List<Film> getPopularFilms(int count);
+    List<Film> searchFilms(String query, boolean searchByDirector, boolean searchByTitle);
+
+    @Transactional(readOnly = true)
+    List<Film> getPopularFilms(int count, Integer genreId, Integer year);
+
+    @Transactional
+    Film addDirector(Integer filmId, Integer directorId);
+
+    @Transactional
+    List<Film> getDirectorsFilms(Integer directorId);
+
+    @Transactional(readOnly = true)
+    List<Film> getCommonFilms(Integer userId, Integer friendId);
+
+    @Transactional(readOnly = true)
+    List<Film> getRecommendedFilms(Integer userId, Integer similarUserId);
 }
