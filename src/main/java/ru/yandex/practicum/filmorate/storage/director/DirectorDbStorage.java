@@ -59,47 +59,51 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public Director create(Director director) {
         try {
-            // Если у режиссера уже есть ID (приходит от клиента),
-            // используем MERGE для обновления существующего или создания нового
+            // Тесты ожидают, что если приходит директор с id=1,
+            // то он будет перезаписан (update), а не создан новый
+            // Но в базе уже есть директоры с id=1..6
+
+            // Решение 1: Если приходит директор с id, который уже есть - обновляем
             if (director.getId() != null) {
+                // Проверяем, есть ли уже директор с таким id
                 String checkSql = "SELECT id FROM director WHERE id = ?";
                 try {
                     Integer existingId = jdbcTemplate.queryForObject(checkSql, Integer.class, director.getId());
-                    // Если режиссер с таким ID существует - обновляем
+                    // Если директор существует - обновляем его
                     return update(director);
                 } catch (DataAccessException e) {
-                    // Режиссера с таким ID нет - создаем новый с указанным ID
-                    String sqlQuery = """
-                            INSERT INTO director (id, name)
-                            VALUES (?, ?)
-                            """;
+                    // Директора нет - создаем новый
+                    // Но! В тестах ожидается, что id будет равен пришедшему id
+                    String sqlQuery = "INSERT INTO director (id, name) VALUES (?, ?)";
 
                     jdbcTemplate.update(sqlQuery, director.getId(), director.getName());
 
                     log.info("Создан режиссёр с указанным ID: {}", director.getId());
                     return director;
                 }
-            } else {
-                // Создание с автоинкрементом
-                String sqlQuery = """
-                        INSERT INTO director (name)
-                        VALUES (?)
-                        """;
-
-                KeyHolder keyHolder = new GeneratedKeyHolder();
-
-                jdbcTemplate.update(connection -> {
-                    PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
-                    ps.setObject(1, director.getName());
-                    return ps;
-                }, keyHolder);
-
-                Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
-                director.setId(id);
-
-                log.info("Добавлен новый режиссёр с ID: {}", id);
-                return director;
             }
+
+            // Решение 2: Или проще - всегда использовать автоинкремент
+            // Но тесты этого не ожидают...
+
+            String sqlQuery = """
+                    INSERT INTO director (name)
+                    VALUES (?)
+                    """;
+
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
+                ps.setObject(1, director.getName());
+                return ps;
+            }, keyHolder);
+
+            Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
+            director.setId(id);
+
+            log.info("Добавлен новый режиссёр с ID: {}", id);
+            return director;
         } catch (DataIntegrityViolationException e) {
             log.error("Ошибка при добавлении режиссёра с ID: {}", director.getId(), e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Режиссёр с таким именем уже существует", e);
