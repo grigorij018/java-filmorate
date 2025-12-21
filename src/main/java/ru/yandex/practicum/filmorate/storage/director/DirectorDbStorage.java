@@ -55,54 +55,45 @@ public class DirectorDbStorage implements DirectorStorage {
         }
     }
 
+    @Override
+    @Transactional
     public Director create(Director director) {
-        // Если директор приходит с ID, игнорируем его и создаем новый
-        String sqlQuery = "INSERT INTO director (name) VALUES (?)";
+        try {
+            // ВСЕГДА ИСПОЛЬЗУЕМ АВТОИНКРЕМЕНТ, ИГНОРИРУЯ ПЕРЕДАННЫЙ ID
+            String sqlQuery = "INSERT INTO director (name) VALUES (?)";
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+            KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, director.getName());
-            return ps;
-        }, keyHolder);
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, director.getName());
+                return ps;
+            }, keyHolder);
 
-        Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
-        director.setId(id);
+            Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
+            director.setId(id);
 
-        log.info("Добавлен новый режиссёр с ID: {}", id);
-        return director;
-    }
-
-    private Director createWithAutoIncrement(Director director) {
-        String sqlQuery = """
-                INSERT INTO director (name)
-                VALUES (?)
-                """;
-
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
-            ps.setObject(1, director.getName());
-            return ps;
-        }, keyHolder);
-
-        Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
-        director.setId(id);
-
-        log.info("Добавлен новый режиссёр с ID: {}", id);
-        return director;
+            log.info("Создан режиссёр с ID: {}", id);
+            return director;
+        } catch (DataIntegrityViolationException e) {
+            log.error("Ошибка при добавлении режиссёра с именем: {}", director.getName(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Режиссёр с таким именем уже существует", e);
+        } catch (DataAccessException e) {
+            log.error("Ошибка при добавлении режиссёра: {}", director.getName(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Не удалось добавить режиссёра", e);
+        }
     }
 
     @Override
     @Transactional
     public Director update(Director director) {
         try {
-            String sqlQuery = """
-                    UPDATE director SET name = ?
-                    WHERE id = ?
-                    """;
+            // Проверяем, существует ли режиссер
+            if (getById(director.getId()).isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");
+            }
+
+            String sqlQuery = "UPDATE director SET name = ? WHERE id = ?";
 
             int updated = jdbcTemplate.update(sqlQuery,
                     director.getName(), director.getId());
@@ -131,10 +122,12 @@ public class DirectorDbStorage implements DirectorStorage {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");
             }
 
-            String sqlQuery = """
-                    DELETE FROM director
-                    WHERE id = ?
-                    """;
+            // Сначала удаляем связи с фильмами
+            String deleteFilmDirectorSql = "DELETE FROM film_director WHERE director_id = ?";
+            jdbcTemplate.update(deleteFilmDirectorSql, id);
+
+            // Затем удаляем режиссера
+            String sqlQuery = "DELETE FROM director WHERE id = ?";
             int deleted = jdbcTemplate.update(sqlQuery, id);
 
             if (deleted > 0) {
