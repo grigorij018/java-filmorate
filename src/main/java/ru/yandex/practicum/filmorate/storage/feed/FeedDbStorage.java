@@ -120,7 +120,7 @@ public class FeedDbStorage implements FeedStorage {
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
         createEvent(event);
-        log.info("Создано событие REVIEW: операция={}, пользователь={}, отзыв={}",
-                operation, userId, reviewId);
+        log.info("Создано событие REVIEW: операция={}, пользователь={}, отзыв={}, eventId={}",
+                operation, userId, reviewId, event.getEventId());
     }
 }

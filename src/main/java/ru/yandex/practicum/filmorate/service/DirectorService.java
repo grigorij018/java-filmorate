@@ -29,8 +29,11 @@ public class DirectorService {
     public Director create(@Valid Director director) {
         log.info("Добавляем режиссера в коллекцию");
 
-        if (director.getId() != null && directorStorage.getById(director.getId()).isPresent()) {
-            return directorStorage.update(director);
+        if (director.getId() != null) {
+            if (directorStorage.getById(director.getId()).isPresent()) {
+                log.info("Директор с ID {} уже существует, обновляем", director.getId());
+                return directorStorage.update(director);
+            }
         }
 
         return directorStorage.create(director);
@@ -38,13 +41,18 @@ public class DirectorService {
 
     public Director update(@Valid Director director) {
         log.info("Обновляем режиссера в коллекции");
-        findById(director.getId());
+
+        if (directorStorage.getById(director.getId()).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");
+        }
+
         return directorStorage.update(director);
     }
 
     public void delete(@Valid Integer id) {
         log.info("Удаляем режиссера с id: {}", id);
-        if (!directorStorage.delete(id))
+        if (!directorStorage.delete(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссер с таким id отсутствует в базе");
+        }
     }
 }

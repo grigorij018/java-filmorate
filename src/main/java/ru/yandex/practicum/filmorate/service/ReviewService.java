@@ -82,6 +82,7 @@ public class ReviewService {
         Review createdReview = reviewStorage.create(review);
         log.info("Создан отзыв с ID: {}", createdReview.getReviewId());
 
+        // Создаем событие для владельца отзыва
         feedStorage.createReviewEvent(review.getUserId(), createdReview.getReviewId(), FeedEvent.Operation.ADD);
 
         return createdReview;
@@ -105,24 +106,20 @@ public class ReviewService {
                         "Отзыв не найден"
                 ));
 
-        // ВРЕМЕННО: Разрешаем обновление чужого отзыва для тестов
-        // if (!existingReview.getUserId().equals(review.getUserId())) {
-        //     throw new ResponseStatusException(
-        //             HttpStatus.FORBIDDEN,
-        //             String.format("Пользователь %d не может редактировать отзыв пользователя %d",
-        //                     review.getUserId(), existingReview.getUserId())
-        //     );
-        // }
+        if (!existingReview.getUserId().equals(review.getUserId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    String.format("Пользователь %d не может редактировать отзыв пользователя %d",
+                            review.getUserId(), existingReview.getUserId())
+            );
+        }
 
         review.setUseful(existingReview.getUseful());
 
         Review updatedReview = reviewStorage.update(review);
         log.info("Отзыв с ID {} обновлен", updatedReview.getReviewId());
 
-        // Тесты ожидают, что событие UPDATE создается для user 2
-        // Но отзыв принадлежит user 1
-        // Создаем событие для того пользователя, который отправил запрос
-        feedStorage.createReviewEvent(review.getUserId(), review.getReviewId(), FeedEvent.Operation.UPDATE);
+        feedStorage.createReviewEvent(existingReview.getUserId(), review.getReviewId(), FeedEvent.Operation.UPDATE);
 
         return updatedReview;
     }
