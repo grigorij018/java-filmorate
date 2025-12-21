@@ -31,4 +31,6 @@ public interface ReviewStorage {
     void removeReaction(Integer reviewId, Integer userId);
 
     boolean existsById(Integer id);
+
+    boolean existsByUserIdAndFilmId(Integer userId, Integer filmId);
 }

@@ -285,12 +285,8 @@ public class ReviewService {
     }
 
     private boolean hasUserReviewedFilm(Integer userId, Integer filmId) {
-        List<Review> userReviews = reviewStorage.findAll().stream()
-                .filter(review -> review.getUserId().equals(userId)
-                        && review.getFilmId().equals(filmId))
-                .toList();
-
-        return !userReviews.isEmpty();
+        // Оптимизированная версия - проверка на уровне БД
+        return reviewStorage.existsByUserIdAndFilmId(userId, filmId);
     }
 
     public List<Review> findAll() {
