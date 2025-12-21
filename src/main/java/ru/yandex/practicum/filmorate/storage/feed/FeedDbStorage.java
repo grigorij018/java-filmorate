@@ -90,8 +90,8 @@ public class FeedDbStorage implements FeedStorage {
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
         createEvent(event);
-        log.info("Создано событие LIKE: операция={}, пользователь={}, фильм={}",
-                operation, userId, filmId);
+        log.info("Создано событие LIKE: операция={}, пользователь={}, фильм={}, eventId={}",
+                operation, userId, filmId, event.getEventId());
     }
 
     @Override

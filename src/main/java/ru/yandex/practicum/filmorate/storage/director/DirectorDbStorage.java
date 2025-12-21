@@ -59,24 +59,47 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public Director create(Director director) {
         try {
-            String sqlQuery = """
-                    INSERT INTO director (name)
-                    VALUES (?)
-                    """;
+            // Если у режиссера уже есть ID (приходит от клиента),
+            // используем MERGE для обновления существующего или создания нового
+            if (director.getId() != null) {
+                String checkSql = "SELECT id FROM director WHERE id = ?";
+                try {
+                    Integer existingId = jdbcTemplate.queryForObject(checkSql, Integer.class, director.getId());
+                    // Если режиссер с таким ID существует - обновляем
+                    return update(director);
+                } catch (DataAccessException e) {
+                    // Режиссера с таким ID нет - создаем новый с указанным ID
+                    String sqlQuery = """
+                            INSERT INTO director (id, name)
+                            VALUES (?, ?)
+                            """;
 
-            KeyHolder keyHolder = new GeneratedKeyHolder();
+                    jdbcTemplate.update(sqlQuery, director.getId(), director.getName());
 
-            jdbcTemplate.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
-                ps.setObject(1, director.getName());
-                return ps;
-            }, keyHolder);
+                    log.info("Создан режиссёр с указанным ID: {}", director.getId());
+                    return director;
+                }
+            } else {
+                // Создание с автоинкрементом
+                String sqlQuery = """
+                        INSERT INTO director (name)
+                        VALUES (?)
+                        """;
 
-            Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
-            director.setId(id);
+                KeyHolder keyHolder = new GeneratedKeyHolder();
 
-            log.info("Добавлен новый режиссёр с ID: {}", id);
-            return director;
+                jdbcTemplate.update(connection -> {
+                    PreparedStatement ps = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
+                    ps.setObject(1, director.getName());
+                    return ps;
+                }, keyHolder);
+
+                Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
+                director.setId(id);
+
+                log.info("Добавлен новый режиссёр с ID: {}", id);
+                return director;
+            }
         } catch (DataIntegrityViolationException e) {
             log.error("Ошибка при добавлении режиссёра с ID: {}", director.getId(), e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Режиссёр с таким именем уже существует", e);

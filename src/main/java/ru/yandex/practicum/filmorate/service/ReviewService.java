@@ -105,13 +105,13 @@ public class ReviewService {
                         "Отзыв не найден"
                 ));
 
-        if (!existingReview.getUserId().equals(review.getUserId())) {
+        /*if (!existingReview.getUserId().equals(review.getUserId())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     String.format("Пользователь %d не может редактировать отзыв пользователя %d",
                             review.getUserId(), existingReview.getUserId())
             );
-        }
+        }*/
 
         review.setUseful(existingReview.getUseful());
 
