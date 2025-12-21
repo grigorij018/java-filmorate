@@ -28,6 +28,11 @@ public class DirectorService {
 
     public Director create(@Valid Director director) {
         log.info("Добавляем режиссера в коллекцию");
+
+        if (director.getId() != null && directorStorage.getById(director.getId()).isPresent()) {
+            return directorStorage.update(director);
+        }
+
         return directorStorage.create(director);
     }
 

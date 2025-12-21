@@ -78,8 +78,6 @@ public class FeedService {
                 .operation(FeedEvent.Operation.ADD)
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
-        log.info("Создание события REVIEW ADD: userId={}, reviewId={}, timestamp={}",
-                userId, reviewId, event.getTimestamp());
         feedStorage.createEvent(event);
     }
 
@@ -91,8 +89,6 @@ public class FeedService {
                 .operation(FeedEvent.Operation.UPDATE)
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
-        log.info("Создание события REVIEW UPDATE: userId={}, reviewId={}, timestamp={}",
-                userId, reviewId, event.getTimestamp());
         feedStorage.createEvent(event);
     }
 

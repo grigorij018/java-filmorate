@@ -25,7 +25,7 @@ public class FeedDbStorage implements FeedStorage {
     @Override
     @Transactional(readOnly = true)
     public List<FeedEvent> getUserFeed(Integer userId) {
-        String sql = "SELECT * FROM feed_events WHERE user_id = ? ORDER BY timestamp ASC";
+        String sql = "SELECT * FROM feed_events WHERE user_id = ? ORDER BY event_id ASC";
 
         return jdbcTemplate.query(sql, this::mapRowToFeedEvent, userId);
     }
