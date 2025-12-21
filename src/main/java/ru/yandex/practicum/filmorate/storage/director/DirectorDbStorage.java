@@ -32,22 +32,14 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     @Transactional(readOnly = true)
     public Collection<Director> findAll() {
-        String sqlQuery = """
-                SELECT *
-                FROM director
-                ORDER BY id
-                """;
+        String sqlQuery = "SELECT * FROM director ORDER BY id";
         return jdbcTemplate.query(sqlQuery, this::mapRowToDirector);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Director> getById(Integer id) {
-        String sqlQuery = """
-                SELECT *
-                FROM director
-                WHERE id = ?
-                """;
+        String sqlQuery = "SELECT * FROM director WHERE id = ?";
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuery, this::mapRowToDirector, id));
         } catch (DataAccessException e) {
@@ -59,7 +51,7 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public Director create(Director director) {
         try {
-            // ВСЕГДА ИСПОЛЬЗУЕМ АВТОИНКРЕМЕНТ, ИГНОРИРУЯ ПЕРЕДАННЫЙ ID
+            // ВСЕГДА используем автоинкремент, игнорируя переданный ID
             String sqlQuery = "INSERT INTO director (name) VALUES (?)";
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -94,9 +86,7 @@ public class DirectorDbStorage implements DirectorStorage {
             }
 
             String sqlQuery = "UPDATE director SET name = ? WHERE id = ?";
-
-            int updated = jdbcTemplate.update(sqlQuery,
-                    director.getName(), director.getId());
+            int updated = jdbcTemplate.update(sqlQuery, director.getName(), director.getId());
 
             if (updated == 0) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");

@@ -196,6 +196,18 @@ CREATE TABLE IF NOT EXISTS feed_events (
     UNIQUE(user_id, event_id)
     );
 
+-- Сброс sequence для автоинкремента (ВАЖНО для тестов!)
+ALTER TABLE director
+    ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE users
+    ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE films
+    ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE reviews
+    ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE feed_events
+    ALTER COLUMN event_id RESTART WITH 1;
+
 -- Индексы для оптимизации запросов (оставлены без изменений)
 CREATE INDEX IF NOT EXISTS idx_films_mpa ON films (mpa_id);
 CREATE INDEX IF NOT EXISTS idx_film_genres_film ON film_genres (film_id);
