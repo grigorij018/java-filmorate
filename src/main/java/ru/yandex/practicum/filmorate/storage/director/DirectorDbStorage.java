@@ -51,7 +51,6 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public Director create(Director director) {
         try {
-            // ВСЕГДА используем автоинкремент, игнорируя переданный ID
             String sqlQuery = "INSERT INTO director (name) VALUES (?)";
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -80,7 +79,6 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public Director update(Director director) {
         try {
-            // Проверяем, существует ли режиссер
             if (getById(director.getId()).isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");
             }
@@ -107,16 +105,13 @@ public class DirectorDbStorage implements DirectorStorage {
     @Transactional
     public boolean delete(Integer id) {
         try {
-            // Проверяем, существует ли режиссер
             if (getById(id).isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Режиссёр не найден");
             }
 
-            // Сначала удаляем связи с фильмами
             String deleteFilmDirectorSql = "DELETE FROM film_director WHERE director_id = ?";
             jdbcTemplate.update(deleteFilmDirectorSql, id);
 
-            // Затем удаляем режиссера
             String sqlQuery = "DELETE FROM director WHERE id = ?";
             int deleted = jdbcTemplate.update(sqlQuery, id);
 

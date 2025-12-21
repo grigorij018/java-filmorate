@@ -82,13 +82,11 @@ public class ReviewService {
         Review createdReview = reviewStorage.create(review);
         log.info("Создан отзыв с ID: {}", createdReview.getReviewId());
 
-        // Создаем событие для владельца отзыва
         feedStorage.createReviewEvent(review.getUserId(), createdReview.getReviewId(), FeedEvent.Operation.ADD);
 
         return createdReview;
     }
 
-    // Заменяем этот блок в методе update() в ReviewService.java:
     public Review update(Review review) {
         log.info("Обновление отзыва с ID: {}", review.getReviewId());
 
